@@ -29,5 +29,5 @@ class PlayerClass:
         self.inventory = []
         self.health = 100
         self.name = __name__
-    
+        
 player = PlayerClass()

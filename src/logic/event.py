@@ -1,5 +1,7 @@
 from player import player
 from typing import List, Tuple
+import logging
+logger = logging.getLogger(__name__)
 
 global eventTypes
 eventTypes = {}
@@ -8,6 +10,7 @@ registeredEvents = {}
 
 
 class RegisterEventMeta(type):
+    """Meta class to keep track of registered event classes"""
     def __new__(mcs, name, bases, class_dict):
         global eventTypes
         cls = super().__new__(mcs, name, bases, class_dict)
@@ -17,22 +20,29 @@ class RegisterEventMeta(type):
 
 
 class GameEvent(metaclass=RegisterEventMeta):
-    def __init__(self, eventId, nextEventId: str = None):
+    """Single instance registers the single event"""
+    def __init__(self, eventId, nextEvent: str = ""):
         global registeredEvents
         registeredEvents |= {eventId: self}
         self.eventId = eventId
-        self.nextEvent = nextEventId
+        self.nextEvent = nextEvent
 
     def __call__(self, *args, **kwds) -> str:
         return self.nextEvent
 
 
 class IfEvent(GameEvent):
-    def __init__(self, eventId: str, condition: str = "", eventIdTrue: str = None, eventIdFalse: str = None):
-        self.condition = condition
-        self.eventIdTrue = eventIdTrue
-        self.eventIdFalse = eventIdFalse
-        super().__init__()
+    defaultConfig = {
+        'condition' : "True",
+        'eventIdTrue' : "",
+        'eventIdFalse' : ""
+    }
+    def __init__(self, eventId: str, config : dict = {}):
+        config = self.defaultConfig | config
+        self.condition = config['condition']
+        self.eventIdTrue = config['eventIdTrue']
+        self.eventIdFalse = config['eventIdFalse']
+        super().__init__(eventId)
 
     def __init__(self, dict):
         pass
@@ -40,17 +50,47 @@ class IfEvent(GameEvent):
     def __call__(self, *args, **kwds) -> str:
         pass
 
+class DamageEvent(GameEvent):
+    defaultConfig = {
+        'health': 0,
+        "nextEvent" : ""
+    }
+    def __init__(self, eventId: str, config : dict = {}):
+        config = self.defaultConfig | config
+        self.health = config['health']
+        super().__init__(eventId, config['nextEvent'])
+    def __call__(self):
+        player.
+        return super().__call__() 
+
 class menuEvent(GameEvent):
-    def __init__(self, eventId, entryList : List[str], eventIdList: List["str"]):
-        self.entryList = entryList
-        self.eventIdList =eventIdList
-        super().__init__(eventId, eventIdList[0])
+    defaultConfig = {
+        'entryList' : [],
+        'eventList' : []
+    }
+    def __init__(self, eventId: str, config : dict = {}):
+        config = self.defaultConfig | config
+        self.entryList = config['entryList']
+        self.eventList = config['eventList']
+        super().__init__(eventId, self.eventList[0])
     def __call__(self):
         pass
+    
 class ConversationEvent(GameEvent):
-    def __init__(self, eventId: str, dialogue: List[Tuple[str, str]], nextEventId: str = None):
-        super().__init__(eventId, nextEventId)
+    defaultConfig = {
+        'dialogue' : [],
+        "nextEvent" : ""
+    }
+    def __init__(self, eventId: str, config : dict = {}):
+        config = self.defaultConfig | config
+        self.dialogue = config['dialogue']
+        super().__init__(eventId, config['nextEvent'])
 
 
-def eventFromList(type: str, args: list):
-    return eventTypes[type](*args)
+def eventFromDict(type: str, eventId: str, config : dict = {}):
+    try:
+        return eventTypes[type](eventId, config)
+    except KeyError as e:
+        logger.error("Event type '%s' undefined", type)
+        # Return dummy event as quick-fix
+        return GameEvent(eventId, config['nextEvent'] if 'nextEvent' in config else "")

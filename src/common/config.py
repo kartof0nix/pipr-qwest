@@ -15,12 +15,26 @@ A config class should be generated once for a module - with init specifing what 
 CONFIG_PATH=Path("~/.pipr-qwest/").expanduser()
 if(not CONFIG_PATH.is_dir()): CONFIG_PATH.mkdir()
 
+def clearAllSettings():
+    """
+    Removes every file in the config directory.
+    """
+    for item in CONFIG_PATH.iterdir():
+        # Check if the item is a file and remove it
+        if item.is_file():
+            item.unlink()
+
 class Config:
-    def __init__(self, name, values : Dict[str, Any] = {}):
+    def __init__(self, name, defaultValues : Dict[str, Any] = {}):
+        self.defaultValues = defaultValues
         self.fpath = CONFIG_PATH.joinpath( name + ".cfg")
-        self.config = values
+        self.config = dict(defaultValues)
         self.load_from_file()
         self.save_to_file() # If any values have been fixed, import
+
+    def reset(self):
+        self.config = self.defaultValues
+        
     def set_value(self, name: str, value: Any):
         if name not in self.config:
             raise KeyError(f"Config item '{name}' not found.")
@@ -44,11 +58,16 @@ class Config:
     def save_to_file(self):
         with open(self.fpath, "w") as f:
             json.dump(self.config, f, indent=4)
+            
 
     def load_from_file(self):
-        with open(self.fpath, "r") as f:
-            data = json.load(f)
-        self.from_dict(data)
+        try:
+            with open(self.fpath, "r") as f:
+                data = json.load(f)
+            self.from_dict(data)
+        except Exception as e:
+            logger.error("Failed to load file: %s", e)
+            logger.debug("Failed to load file: %s", traceback.format_exc())
 
     # Subscription support
     def __getitem__(self, key: str) -> Any:
@@ -64,13 +83,13 @@ class Config:
 '''User-selected settings (via GUI)'''
 class Setting(Config):
     
-    def __init__(self, name : str, values : Dict[str, Any] = {}, constrains : Dict[str, Dict[str, Any]] = {}):
+    def __init__(self, name : str, defaultValues : Dict[str, Any] = {}, constrains : Dict[str, Dict[str, Any]] = {}):
         for key in constrains:
             if("type" not in constrains[key]):
-                constrains[key]["type"] = type(values[key])
+                constrains[key]["type"] = type(defaultValues[key])
         self.name = name
         self.constrains = constrains
-        super().__init__(name, values)
+        super().__init__(name, defaultValues)
 
     def check_value(self, name : str, value: Any):
         if name not in self.config:
@@ -89,13 +108,6 @@ class Setting(Config):
         self.check_value(name, value)
         return super().set_value(name, value)
     
-    def load_from_file(self):
-        try:
-            return super().load_from_file()
-        except Exception as e:
-            logger.error("Failed to load file: %s", e)
-            logger.debug("Failed to load file: %s", traceback.format_exc())
-            
     
 
 registered_settings : List[Setting] = []
