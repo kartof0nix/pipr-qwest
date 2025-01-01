@@ -15,47 +15,42 @@ After having somewhat come to terms with her circumstances, Pomni adopts a more 
 Later in episode 4, she seems to have adapted more to being in the circus. She sees Gummigoo again and doesn't breakdown, she enters normal conversations with people like Jax, and shows concern for Gangle, asking if anyone could help her with her issues. She even offers to stay behind to close the restaurant when she sees that Gangle is sad. """
 
 # async def test():
-    
-class mainView:
-    palette = [("reversed", "standout", ""),
-               ("button", "light cyan", ""), 
-               ("reversed_button", "black", "light cyan"),
-               ("banner", "", "", "", "#ffa", "#60d"),
-               ("streak", "", "", "", "g50", "#60a"),
-               ("inside", "", "", "", "g38", "#808"),
-               ("outside", "", "", "", "g27", "#a06"),
-               ("bg", "", "", "", "g7", "#d06")
-    ]
-    
-    null_widget = urwid.Text("", align="center")
-    main_placeholder = urwid.WidgetPlaceholder(null_widget)
-    def back_placeholder(self):
-        current_widget = self.main_placeholder
-        while(type(current_widget.original_widget) == urwid.Overlay ):
-            current_widget = current_widget.original_widget.bottom_w
-        return current_widget
-    def replace_back(self, widget : urwid.Widget):
-        placeholder = self.back_placeholder()
-        placeholder.original_widget = widget
-    def pop_back(self):
-        placeholder = self.back_placeholder()
-        current_widget = self.main_placeholder
-        try:
-            while(type(current_widget.original_widget.bottom_w.original_widget) == urwid.WidgetPlaceholder ):
-                current_widget = current_widget.original_widget.bottom_w
-            current_widget.original_widget = current_widget.original_widget.top_w
-        except Exception:
-            logger.warning("Popping overlay failed")
-    def append_back(self, widget:urwid.Widget, width : int, height : int, side : Literal["left", "top", "right", "bottom"]):
-        placeholder = self.back_placeholder()
-        logger.debug("Back placeholder : %s", repr(placeholder))
-        ov = None
+
+palette = [("reversed", "standout", ""),
+           ("button", "light cyan", ""),
+           ("reversed_button", "black", "light cyan"),
+           ("banner", "", "", "", "#ffa", "#60d"),
+           ("streak", "", "", "", "g50", "#60a"),
+           ("inside", "", "", "", "g38", "#808"),
+           ("outside", "", "", "", "g27", "#a06"),
+           ("bg", "", "", "", "g7", "#d06")
+           ]
+
+
+class MainView(urwid.WidgetPlaceholder):
+
+    def get_top(self):
+        return self.main_placeholder.original_widget.top_w
+
+    def pop_top(self):
+        logger.debug("Popping top overlay. Current top : %s",
+                     repr(self.main_placeholder.original_widget))
+        if (type(self.main_placeholder.original_widget) != urwid.Overlay):
+            logger.error(
+                "Attempted to pop overlay whilst no overlay is active.")
+            return
+        self.main_placeholder.original_widget = self.main_placeholder.original_widget.bottom_w
+        loop.draw_screen()
+    def push_top(self, widget: urwid.Widget, width: int, height: int, halign: Literal["left", "center", "right"], valign=Literal['top', 'middle', 'bottom']):
+        placeholder = self.main_placeholder
+        logger.debug("Pushing %s. Current top placeholder : %s",
+                     repr(widget), repr(self.main_placeholder))
         ov = urwid.Overlay(
+            bottom_w=self.main_placeholder.original_widget,
             top_w=widget,
-            bottom_w=placeholder.original_widget,
-            align='left',
+            align=halign,
+            valign=valign,
             width=width,
-            valign='middle',
             height=height,
             left=2,
             right=2,
@@ -63,11 +58,12 @@ class mainView:
             bottom=1
         )
         logger.debug("New back placeholder : %s", repr(ov))
-        placeholder.original_widget = ov
+        self.main_placeholder.original_widget = ov
+        loop.draw_screen()
         return
-        if(side == "left"):
+        if (side == "left"):
             pass
-        if(side == "right"):
+        if (side == "right"):
             ov = urwid.Overlay(
                 placeholder.original_widget,
                 widget,
@@ -76,7 +72,7 @@ class mainView:
                 valign="middle",
                 right=2
             )
-        if(side == "top"):
+        if (side == "top"):
             ov = urwid.Overlay(
                 placeholder.original_widget,
                 widget,
@@ -85,7 +81,7 @@ class mainView:
                 align="middle",
                 top=2
             )
-        if(side == "bottom"):
+        if (side == "bottom"):
             ov = urwid.Overlay(
                 placeholder.original_widget,
                 widget,
@@ -94,111 +90,104 @@ class mainView:
                 align="middle",
                 bottom=2
             )
-        
-    
+
+    @property
+    def bottom(self) -> urwid.Widget:
+        return self.bottom_placeholder.original_widget
+
+    @bottom.setter
+    def bottom(self, widget: urwid.Widget):
+        self.bottom_placeholder.original_widget = widget
+
     def __init__(self):
-        # Base widget
-        null_widget = urwid.Text(("banner", "Null"), align="center")
-        null_filler = urwid.Filler(null_widget, valign="middle")
-        null_attr = urwid.AttrMap(null_filler, "bg")
-        self.main_placeholder = urwid.WidgetPlaceholder(null_attr)
-        
+        self.bottom_placeholder = urwid.WidgetPlaceholder(
+            urwid.SolidFill(u'/'))
+        self.main_placeholder =  urwid.WidgetPlaceholder(self.bottom_placeholder)
+        super(MainView, self).__init__(self.main_placeholder)
+
+        # self.box_level = 0
+        # self.open_box(box)
 
         # Run the application with the placeholder
-    def run(self, callback):
-        self.aloop = asyncio.new_event_loop()
-        # self.aloop = asyncio.get_event_loop()
-        # self.aloop.stop()
-        ev_loop = urwid.AsyncioEventLoop(loop=self.aloop)
-        self.loop = urwid.MainLoop(self.main_placeholder, palette=self.palette, unhandled_input=self.handle_input, event_loop=ev_loop)
-        self.loop.screen.set_terminal_properties(colors=256)
-        # self.draw_main()
-        self.aloop.create_task(callback())
-        self.loop.run()
-        # self.loop.draw_screen()
-        # asyncio.create_task()
-        # self.aloop.create_task(self.hide_overlay_after(5))
-        # self.show_dialog()
 
-    def handle_input(self, key):
+    def keypress(self, size, key):
+        logger.info("Pressed %s", key)
         if key in ("q", "Q"):
             raise urwid.ExitMainLoop()
 
-        # Show the dialog on startup
+    def selectable(self):
+        return True
 
 
-view = mainView()
+def add_frame(widget : urwid.Widget, width:int, height:int, side : Literal['left', 'top', 'right', 'bottom'], title=""):
+    halign = {'left':'left', 'top':'center', 'right':'right', 'bottom':'center'}[side]
+    valign = {'left':'middle', 'top':'top', 'right':'middle', 'bottom':'bottom'}[side]
+    fixed_height_content = urwid.BoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+    line_box_widget = urwid.Filler(urwid.LineBox(fixed_height_content, title))
+    logger.info(line_box_widget.sizing())
+    view.push_top(line_box_widget, width=width+2, height=height+2, halign=halign, valign=valign)
 
-def exit_app():
-    raise urwid.ExitMainLoop()
+def get_frame():
+    return view.get_top().original_widget.original_widget.original_widget.original_widget
 
-async def create_panes():
+
+
+
+view = MainView()
+global aloop
+aloop = None
+'''Main asyncio event loop'''
+global loop
+loop = None
+'''Urwid main loop. Use to re-draw screen after update'''
+def render(callback):
+    '''
+    Render the main view. Since urwid needs to manage asyncio, use callback asyc function to continue execution of main program.
+    '''
+    global aloop
+    global loop
+    null_widget = urwid.Text(("banner", "Null"), align="center")
+    null_filler = urwid.Filler(null_widget, valign="middle")
+    null_attr = urwid.AttrMap(null_filler, "bg")
+    main_placeholder = urwid.WidgetPlaceholder(null_attr)
+
+    aloop = asyncio.new_event_loop()
+    ev_loop = urwid.AsyncioEventLoop(loop=aloop)
+
+    loop = urwid.MainLoop(view, palette=palette, event_loop=ev_loop)
+    loop.screen.set_terminal_properties(colors=256)
+    # self.draw_main()
+    aloop.create_task(callback())
+    loop.run()
+
+# --- Test module --- 
+
+async def test_view():
     logger.info("Awaiting")
     await asyncio.sleep(2)
     logger.info("Creating widget 1")
-    text_widget = urwid.Text("This is some text inside a fixed-size LineBox.")
-
-    # Create a Pile or another container for the Text widget if needed
-    fixed_text_widget = urwid.Pile([text_widget])
-
-    # Set a fixed size for the text widget using a Filler or directly via BoxAdapter (if needed)
-    line_box_widget = urwid.LineBox(fixed_text_widget, title="Fixed LineBox")
-
-    # Wrap the LineBox in a Filler to handle alignment and size
-    view.append_back(urwid.Filler(line_box_widget, height=10), 10, 10, 'left')
+    add_frame(urwid.Text("This is some text inside a fixed-size LineBox."), 6, 10, 'left', 'tet')
     logger.info("Created widget 1")
-
-    text_widget = urwid.Text("Test 2")
-
-    # Create a Pile or another container for the Text widget if needed
-    fixed_text_widget = urwid.Pile([text_widget])
-
-    # Set a fixed size for the text widget using a Filler or directly via BoxAdapter (if needed)
-    line_box_widget = urwid.LineBox(fixed_text_widget, title="Fixed LineBox")
-
-    # Wrap the LineBox in a Filler to handle alignment and size
-    view.append_back(urwid.Filler(line_box_widget, height=3), 10, 10, 'bottom')
-
+    await asyncio.sleep(4)
+    add_frame(urwid.Text("You're bad at programming"), 40, 2, 'bottom', "You like kissing boys, don't you?")
+    logger.info("Created widget 2")
+    await asyncio.sleep(4)
+    logger.info("Modified widget 2")
+    get_frame().set_text("I changed my mind")
+    loop.draw_screen()
+    await asyncio.sleep(4)
+    logger.info("Modified bg")
+    view.bottom = urwid.SolidFill(u'#')
+    loop.draw_screen()
+    await asyncio.sleep(2)
+    logger.info("Removed widget 2")
+    view.pop_top()
+    
     
 
-
-
 if __name__ == "__main__":
-    logging.basicConfig(filename='qwest.log', level=logging.DEBUG, filemode="w")
-    logger.info("Starting [...]")
+    logging.basicConfig(filename='qwest.log',
+                        level=logging.DEBUG, filemode="w")
+    logger.info(f"Starting test module {__package__}")
     # asyncio.create_task(create_panes())
-    view.run(create_panes)
-    # asyncio.create_task(view.run())
-    # view.run()
-    logger.info("Stopiing [...]")
-
-
-        # show_dialog()
-        
-        # Function to show the dialog
-        # def show_dialog():
-        #     dialog_text = urwid.Text("This is a dialog box.", align="center")
-        #     dialog_buttons = urwid.Columns(
-        #         [
-        #             urwid.Button("OK", on_press=lambda button: exit_app()),
-        #             urwid.Button("Cancel", on_press=lambda button: hide_dialog()),
-        #         ],
-        #         dividechars=2,
-        #     )
-        #     dialog_content = urwid.Pile([dialog_text, urwid.Divider(), dialog_buttons])
-        #     dialog_box = urwid.LineBox(dialog_content, title="Dialog")
-        #     dialog_overlay = urwid.Overlay(
-        #         urwid.Filler(dialog_box, valign="middle", height=10),
-        #         base_widget,
-        #         align="center",
-        #         width=40,
-        #         valign="middle",
-        #         height=10,
-        #     )
-        #     placeholder.original_widget = dialog_overlay
-
-        # Function to hide the dialog
-        # def hide_dialog():
-        #     placeholder.original_widget = base_widget
-
-        # Handle user input (for navigation and quitting)
+    render(test_view)
