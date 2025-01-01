@@ -3,8 +3,8 @@ from __future__ import annotations
 from typing import List, Any
 import urwid
 from collections.abc import Iterable
-from common.config import Setting, registered_settings
-from graphics.common import Clickable
+from src.common.config import Setting, registered_settings
+from src.graphics.common import CustomButton
 
 
     
@@ -88,8 +88,8 @@ class SettingsItem(urwid.AttrMap):
         if(title == None): title = item.capitalize().replace('_', ' ') + ": " 
         self.left = urwid.Text(title)
         self.right = widget
-        dec = Clickable("<", self.right.decrement)
-        inc = Clickable(">", self.right.increment)
+        dec = CustomButton("<", self.right.decrement)
+        inc = CustomButton(">", self.right.increment)
         # urwid.connect_signal(dec, "click", self.right.decrement())
         # urwid.connect_signal(inc, "click", self.right.increment())
         super().__init__(urwid.Columns([('pack', self.left), ('pack', dec), ('pack', self.right), ('pack', inc),], focus_column=1), None, focus_map="reversed")
@@ -143,3 +143,4 @@ def render():
     palette = [("reversed", "standout", ""), ("button", "light cyan", ""), ("reversed_button", "black", "light cyan")]
     
     urwid.MainLoop(top, palette=palette).run()
+# render()

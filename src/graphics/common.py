@@ -1,6 +1,6 @@
 import urwid
 
-class Clickable(urwid.Button):
+class CustomButton(urwid.Button):
     def __init__(self, label, on_press=None, user_data=None, prefix='', suffix=''):
         super().__init__("")
         self.prefix = prefix
