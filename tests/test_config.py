@@ -1,4 +1,4 @@
-from ..src.common.config import Config, Setting, clearAllSettings
+from src.common.config import Config, Setting
 import pytest
 
 
@@ -14,10 +14,11 @@ def test_config():
     assert ( a['time']  == 12)
     
 def test_saving():
-    clearAllSettings()
+    # clearAllSettings()
     a = Config("pytest_saving", {
         "speed" : 12
     })
+    a.reset()
     assert(a['speed'] == 12)
     a['speed']=16
     a.save_to_file()

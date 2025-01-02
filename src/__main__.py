@@ -4,7 +4,6 @@
 
 import datetime
 import logging
-
 with open("qwest.log", "r") as old:
     arch = open("qwest_old.log", "a")
     arch.write(old.read())
@@ -14,10 +13,12 @@ logging.basicConfig(filename='qwest.log', level=logging.INFO, filemode="w")
 logger.info('Started logger at %s' % datetime.datetime.now() )
 
 import test
-from graphics.settings import render
-
+# from src.graphics.settings import render
+from src.level import pap
+# def main():
+#     render()
 def main():
-    render()
+    pap()
 
 if __name__ == '__main__':
     main()

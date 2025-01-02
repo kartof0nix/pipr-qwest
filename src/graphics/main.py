@@ -23,7 +23,10 @@ palette = [("reversed", "standout", ""),
            ("streak", "", "", "", "g50", "#60a"),
            ("inside", "", "", "", "g38", "#808"),
            ("outside", "", "", "", "g27", "#a06"),
-           ("bg", "", "", "", "g7", "#d06")
+           ("bg", "", "", "", "g7", "#d06"),
+           ("cyan", "dark cyan", ""),
+           ("magenta","dark magenta", ""),
+           
            ]
 
 
@@ -101,7 +104,7 @@ class MainView(urwid.WidgetPlaceholder):
 
     def __init__(self):
         self.bottom_placeholder = urwid.WidgetPlaceholder(
-            urwid.SolidFill(u'/'))
+            urwid.SolidFill(u'+'))
         self.main_placeholder =  urwid.WidgetPlaceholder(self.bottom_placeholder)
         super(MainView, self).__init__(self.main_placeholder)
 
@@ -134,18 +137,13 @@ def get_frame():
 
 
 view = MainView()
-global aloop
-aloop = None
-'''Main asyncio event loop'''
-global loop
-loop = None
 '''Urwid main loop. Use to re-draw screen after update'''
 def render(callback):
+    global loop
+    global aloop
     '''
     Render the main view. Since urwid needs to manage asyncio, use callback asyc function to continue execution of main program.
     '''
-    global aloop
-    global loop
     null_widget = urwid.Text(("banner", "Null"), align="center")
     null_filler = urwid.Filler(null_widget, valign="middle")
     null_attr = urwid.AttrMap(null_filler, "bg")
@@ -159,6 +157,13 @@ def render(callback):
     # self.draw_main()
     aloop.create_task(callback())
     loop.run()
+    
+
+'''Main asyncio event loop'''
+# global aloop
+# aloop = None
+# global loop
+# loop = None
 
 # --- Test module --- 
 

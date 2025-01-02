@@ -1,3 +1,7 @@
+from src.common.config import Config
+
+from pathlib import Path
+
 class Item:
     def __init__(self, itemId : str, name : str = None, desc : str = ""):
         self.itemId = itemId
@@ -24,10 +28,17 @@ item_lib = {i.itemId : i for i in [
     
 ]}
 
-class PlayerClass:
-    def __init__(self):
-        self.inventory = []
-        self.health = 100
-        self.name = __name__
+"""Define a universal player (save) class since multiple saves are possible"""
+class PlayerClass(Config):
+    CONFIG_PATH=Path("~/.pipr-qwest/config").expanduser()
+    def __init__(self, filename):
+        super().__init__(filename,
+        {
+            'health': 100,
+            'armor': 0,
+            'attack': 1
+        })
+    def set_value(self, name, value):
+        self.config[name] = value
         
-player = PlayerClass()
+        

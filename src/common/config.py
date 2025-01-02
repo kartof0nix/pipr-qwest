@@ -12,22 +12,26 @@ logger = logging.getLogger(__name__)
 
 '''
 A config class should be generated once for a module - with init specifing what config fields it contains'''
-CONFIG_PATH=Path("~/.pipr-qwest/").expanduser()
-if(not CONFIG_PATH.is_dir()): CONFIG_PATH.mkdir()
 
-def clearAllSettings():
-    """
-    Removes every file in the config directory.
-    """
-    for item in CONFIG_PATH.iterdir():
-        # Check if the item is a file and remove it
-        if item.is_file():
-            item.unlink()
+# def clearAllSettings():
+#     """
+#     Removes every file in the config directory.
+#     """
+#     for item in CONFIG_PATH.iterdir():
+#         # Check if the item is a file and remove it
+#         if item.is_file():
+#             item.unlink()
 
 class Config:
-    def __init__(self, name, defaultValues : Dict[str, Any] = {}):
+    CONFIG_PATH=Path("~/.pipr-qwest/config").expanduser()
+
+    def __init__(self, filename, defaultValues : Dict[str, Any] = {}):
+        self.name = filename 
+        if(not self.CONFIG_PATH.is_dir()): 
+            self.CONFIG_PATH.mkdir()
+            logger.info("Directory %s not found, creating", self.CONFIG_PATH.absolute())
         self.defaultValues = defaultValues
-        self.fpath = CONFIG_PATH.joinpath( name + ".cfg")
+        self.fpath = self.CONFIG_PATH.joinpath( filename)
         self.config = dict(defaultValues)
         self.load_from_file()
         self.save_to_file() # If any values have been fixed, import
@@ -49,11 +53,16 @@ class Config:
     #     return {key: vars(item) for key, item in self.config}
 
     def from_dict(self, data: Dict[str, Any]):
+        for key in self.config:
+            if key not in data:
+                logger.info("Key %s not defined in config %s", key, self.fpath )
         for name, item_data in data.items():
             try:
+                logger.debug("Setting %s = %s", name, item_data)
                 self.set_value(name, item_data)
             except KeyError:
                 logger.warning("Config file %s contains invalid key %s", self.fpath, self.name)
+            
 
     def save_to_file(self):
         with open(self.fpath, "w") as f:
@@ -61,6 +70,7 @@ class Config:
             
 
     def load_from_file(self):
+        logger.debug("Loading config from %s", self.fpath.absolute())
         try:
             with open(self.fpath, "r") as f:
                 data = json.load(f)
@@ -109,5 +119,7 @@ class Setting(Config):
         return super().set_value(name, value)
     
     
-
+'''
+A global list of registered settings from any module edditable from GUI
+'''
 registered_settings : List[Setting] = []

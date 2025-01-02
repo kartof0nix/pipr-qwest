@@ -10,7 +10,7 @@ class item_square(item):
     
 
     def sketch(s):
-        grid = [[0 for i in range(s.y)] for j in range(s.x)]
+        grid = [[0 for i in range(3)] for j in range(3)]
         grid[1][1]=1
         for i in range(4):
             grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = s.paths[i]
@@ -22,17 +22,15 @@ class item_square(item):
     
 
 class map:
-    def __init__(self, n, m, X, Y):
+    def __init__(self, n, m):
         self.n = n
         self.m = m
-        self.x = X
-        self.y = Y
 
         self.colour = [[Style.RESET_ALL for j in range(self.y)] for i in range(self.x)]
         self.char = [["." for j in range(self.y)] for i in range(self.x)]
 
         self.fields = [[]]    
-    def grid(self):
+    def grid(self, x, y):
         for i in range(self.x):
             for j in range(self.y):
                 c = ( ( ( i*self.n) // self.x) + ( ( j * self.m ) // self.y ) ) % 3

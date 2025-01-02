@@ -1,0 +1,9 @@
+DEBUG:src.common.config:Loading config from /home/karbon/Documents/PIPR/elka-qwest/res/levels/asriel_den.json
+DEBUG:src.common.config:Setting name = asriel_den.json
+DEBUG:src.common.config:Setting fields = {'1': {'eventOnEnter': 'goblinThreat'}, '2': {}, '3': {}, '4': {}, '5': {}, '6': {}}
+DEBUG:src.common.config:Setting startField = 1
+DEBUG:src.common.config:Setting graph = [[1, 2], [2, 3], [3, 4], [4, 5], [3, 6]]
+DEBUG:src.common.config:Setting grid = [[0, 1, 2, 3, 4], [0, 0, 0, 6, 5]]
+DEBUG:src.common.config:Setting events = [{'eventType': 'ConversationEvent', 'eventId': 'goblinThreat', 'params': {'dialogue': [['goblin leader', 'Who dare show up in our camp']]}}]
+DEBUG:__main__:{'name': 'asriel_den.json', 'fields': {'1': {'eventOnEnter': 'goblinThreat'}, '2': {}, '3': {}, '4': {}, '5': {}, '6': {}}, 'startField': 1, 'graph': [[1, 2], [2, 3], [3, 4], [4, 5], [3, 6]], 'grid': [[0, 1, 2, 3, 4], [0, 0, 0, 6, 5]], 'events': [{'eventType': 'ConversationEvent', 'eventId': 'goblinThreat', 'params': {'dialogue': [['goblin leader', 'Who dare show up in our camp']]}}]}
+INFO:__main__:Started logger at 2025-01-02 09:24:10.301073
