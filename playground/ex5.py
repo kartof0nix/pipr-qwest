@@ -1,23 +1,71 @@
 import urwid
 
-def main():
-    # Create the text widget
-    text_widget = urwid.Text("This is some text inside a fixed-size LineBox.")
+def menu_button(caption, callback):
+    button = urwid.Button(caption)
+    urwid.connect_signal(button, 'click', callback)
+    return urwid.AttrMap(button, None, focus_map='reversed')
 
-    # Create a Pile or another container for the Text widget if needed
-    fixed_text_widget = urwid.Pile([text_widget])
+def sub_menu(caption, choices):
+    contents = menu(caption, choices)
+    def open_menu(button):
+        return top.open_box(contents)
+    return menu_button([caption, u'...'], open_menu)
 
-    # Set a fixed size for the text widget using a Filler or directly via BoxAdapter (if needed)
-    line_box_widget = urwid.LineBox(fixed_text_widget, title="Fixed LineBox")
+def menu(title, choices):
+    body = [urwid.Text(title), urwid.Divider()]
+    body.extend(choices)
+    return urwid.ListBox(urwid.SimpleFocusListWalker(body))
 
-    # Wrap the LineBox in a Filler to handle alignment and size
-    filler = urwid.Filler(line_box_widget, valign="middle", height=1)
+def item_chosen(button):
+    response = urwid.Text([u'You chose ', button.label, u'\n'])
+    done = menu_button(u'Ok', exit_program)
+    top.open_box(urwid.Filler(urwid.Pile([response, done])))
 
-    # To enforce fixed size, you can use a custom method to control sizing:
-    filler = urwid.AttrMap(filler, None)  # Optional: Apply any attributes/styles
+def exit_program(button):
+    raise urwid.ExitMainLoop()
 
-    # Run the application with the filler as the main widget
-    urwid.MainLoop(filler).run()
+menu_top = menu(u'Main Menu', [
+    sub_menu(u'Applications', [
+        sub_menu(u'Accessories', [
+            menu_button(u'Text Editor', item_chosen),
+            menu_button(u'Terminal', item_chosen),
+        ]),
+    ]),
+    sub_menu(u'System', [
+        sub_menu(u'Preferences', [
+            menu_button(u'Appearance', item_chosen),
+        ]),
+        menu_button(u'Lock Screen', item_chosen),
+    ]),
+])
 
-if __name__ == "__main__":
-    main()
+class CascadingBoxes(urwid.WidgetPlaceholder):
+    max_box_levels = 4
+
+    def __init__(self, box):
+        super(CascadingBoxes, self).__init__(urwid.SolidFill(u'/'))
+        self.box_level = 0
+        self.open_box(box)
+
+    def open_box(self, box):
+        self.original_widget = urwid.Overlay(urwid.LineBox(box),
+            self.original_widget,
+            align='center', width=('relative', 80),
+            valign='middle', height=('relative', 80),
+            min_width=24, min_height=8,
+            left=self.box_level * 3,
+            right=(self.max_box_levels - self.box_level - 1) * 3,
+            top=self.box_level * 2,
+            bottom=(self.max_box_levels - self.box_level - 1) * 2)
+        self.box_level += 1
+
+    def keypress(self, size, key):
+        if key == 'esc' and self.box_level > 1:
+            self.original_widget = self.original_widget[0]
+            self.box_level -= 1
+        else:
+            return super(CascadingBoxes, self).keypress(size, key)
+
+top = CascadingBoxes(menu_top)
+urwid.MainLoop(top, palette=[('reversed', 'standout', '')]).run()
+

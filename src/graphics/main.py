@@ -134,16 +134,20 @@ def get_frame():
     return view.get_top().original_widget.original_widget.original_widget.original_widget
 
 
-
+def null_function(*argv):
+    pass
+    
 
 view = MainView()
 '''Urwid main loop. Use to re-draw screen after update'''
 def render(callback):
-    global loop
-    global aloop
     '''
     Render the main view. Since urwid needs to manage asyncio, use callback asyc function to continue execution of main program.
     '''
+    urwid.set_encoding("UTF-8")
+    # urwid.widget.validate_size = null_function #It doesn't work. Urwid stupid. I DO NOT CARE
+    global loop
+    global aloop
     null_widget = urwid.Text(("banner", "Null"), align="center")
     null_filler = urwid.Filler(null_widget, valign="middle")
     null_attr = urwid.AttrMap(null_filler, "bg")

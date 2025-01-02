@@ -31,20 +31,23 @@ DIRECTIONS = {
 }
 
 class Field:
-    def __init__(self, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = ""):
+    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", items:List=[]):
+        self.num = num
         self.neighbours = dict(neighbours)
         self.eventOnEnter = eventOnEnter
         self.eventOnInspect = eventOnInspect
         self.eventOnLeave = eventOnLeave
+        self.items = items
         
     @classmethod
-    def from_dict(self, player, cfg:Dict):
-        res = Field(player)
+    def from_dict(self, num:int, player, cfg:Dict):
+        res = Field(player, num)
         self.player = player
         if ('neighbours') in cfg: res.neighbours = cfg['neighbours']     
         if ('eventOnEnter') in cfg: res.eventOnEnter = cfg['eventOnEnter']     
         if ('eventOnInspect') in cfg: res.eventOnInspect = cfg['eventOnInspect']     
         if ('eventOnLeave') in cfg: res.eventOnLeave = cfg['eventOnLeave']     
+        if ('items') in cfg: res.items = cfg['items']     
         return res
 
     def enter(self):
@@ -77,7 +80,7 @@ class Level:
         # Initialize fields
         for i in fieldsInit:
             logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
-            self.fieldDict[int(i)] = Field.from_dict(player=player, cfg=fieldsInit[i])
+            self.fieldDict[int(i)] = Field.from_dict(int(i), player=player, cfg=fieldsInit[i])
                 
         #Initialize grid
         self.grid = grid
@@ -87,7 +90,7 @@ class Level:
             for j in range(self.width):
                 if not grid[i][j] in self.fieldDict:                
                     logger.info("Level %s undefined field %d", self.name, grid[i][j])
-                    self.fieldDict[grid[i][j]] = Field(player)
+                    self.fieldDict[grid[i][j]] = Field(grid[i][j], player)
                 for d in DIRECTIONS:
                     i2 = i + DIRECTIONS[d][0]
                     j2 = j + DIRECTIONS[d][1]

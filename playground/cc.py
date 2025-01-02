@@ -52,7 +52,7 @@ class mainView():
     urwid_loop = urwid.MainLoop(placeholder, unhandled_input=handle_input)
 
 
-    async def run(self):
+    def run(self):
         self.aloop = asyncio.get_event_loop()
         ev_loop = urwid.AsyncioEventLoop(loop=self.aloop)
         self.loop = urwid.MainLoop(self.placeholder, unhandled_input=self.handle_input, event_loop=ev_loop)

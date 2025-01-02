@@ -1,8 +1,10 @@
 from src.graphics import main as tui_main
-from src.level import Level
+from src.level import Level, Field
 # from urwid import Sizing, Widget, BigText, TextCanvas
 
-
+from random import shuffle
+from pathlib import Path
+import json
 import asyncio
 import urwid
 import traceback
@@ -28,8 +30,8 @@ class item:
     def sketch(s, x, y):
         '''Sketch the item with size (x, y)'''
         grid = [[None for i in range(y)] for j in range(x)]
-        clr = [[s.style for i in range(y)] for j in range(x)]
-        return (grid, clr)
+        style = [[s.style for i in range(y)] for j in range(x)]
+        return (grid, style)
     
     def apply(s, off_x, off_y, x, y, char, style):
         '''Apply the rendered item on canvas (char, style) with offset'''
@@ -42,15 +44,51 @@ class item:
                 if(style[i][j] != ''):
                     style[i + off_x][j + off_y] = stl[i][j]
 
+class texture(item):
+    TEXTURE_PATH=Path("res/texture").expanduser()
+    def __init__(self, filename:str):
+        logger.info("Creating texture %s", filename)
+        try:
+            with open(self.TEXTURE_PATH.joinpath(filename), "r") as f:
+                data = json.load(f)
+            self.attrmap = data['attrmap']
+            self.textures = data['textutes']
+        except Exception as e:
+            logger.error("Failed to load file: %s", e)
+    def sketch(self, x, y):
+        (grid, style) = super().sketch(x, y)
+        # Find the texture approieate for thy size
+        best = "0x0"
+        for t in self.textures:
+            (tx, ty) = t.split("x")
+            (bx, by) = best.split("x")
+            (tx, ty) = (int(tx), int(ty))
+            (bx, by) = (int(bx), int(by))
+            if(tx <= x and ty <= y and tx+ty >= bx+by):
+                best=t
+        (tx, ty) = best.split("x")
+        (tx, ty) = (int(tx), int(ty))
+        tex = self.textures[best]
+        # Find middle of drawing area
+        x0 = int((x - tx)/2)
+        y0 = int((y - ty)/2)
+        #Apply appropieate texture
+        for i in range(tx):
+            for j in range(ty):
+                grid[i+x0][j+y0] = tex[0][i][j]
+                style[i+x0][j+y0] = self.attrmap[tex[1][i][j]]
+        return(grid, style)
+            
+            
+        # super().__init__()
 class item_square(item):
 
-    def __init__(s, neighbours:Dict[str, bool]):
+    def __init__(s, field : Field):
         # super().__init__()
-        logger.info("r")
-        s.paths = [bool(i in neighbours) for i in AIM_LABEL]
-        logger.debug("Ngb : %s", s.paths )
+        s.field = field
+        s.paths = [bool(i in field.neighbours) for i in AIM_LABEL]
         # s.paths = paths
-    
+        s.used_tiles = []
 
     def sketch(s, x, y):
         grid = [[0 for i in range(3)] for j in range(3)]
@@ -58,9 +96,28 @@ class item_square(item):
         for i in range(4):
             grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = s.paths[i]
 
-        out = [''.join(['.' if grid[i*3//x][j*3//y] else '#' for j in range(y)]) for i in range(x)]
+        out = [['.' if grid[i*3//x][j*3//y] else '#' for j in range(y)] for i in range(x)]
 
         style = [[s.style for i in range(y)] for i in range(x)]
+        available_tiles = [(i, j) if not grid[i][j] and (i, j) not in s.used_tiles  else None for j in range(3) for i in range(3)] 
+        while None in available_tiles:
+            available_tiles.remove(None)
+        shuffle(available_tiles)
+        shuffle(available_tiles)
+        tile_queue = s.used_tiles + available_tiles
+        s.used_tiles=[]
+        # logger.info(available_tiles)
+        for it in s.field.items:
+            
+            poz = tile_queue[0]
+            tile_queue.remove(poz)
+            s.used_tiles += [poz]
+            tex = texture(it+".json")
+            logger.info("Showing texture on %s", str(poz))
+            (x0, y0) = (int((poz[0]*x+3-poz[0]+1)/3), int((poz[1]*y+3-poz[1]+1)/3))
+            (x1, y1) = (int(((poz[0]+1)*x+3-(poz[0]+1)+1)/3), int(((poz[1]+1)*y+3-(poz[1]+1)+1)/3))
+            logger.debug("Properties : (%d, %d) (%d, %d) (%d, %d)", x, y, x0, y0, x1, y1)
+            tex.apply(x0, y0, x1-x0, y1-y0, out, style)
         return (out, style)
 
 
@@ -74,7 +131,7 @@ class fabric(urwid.Widget):
         return(char, style)
     
     def render(self, size : tuple[int, int], focus: bool = False) -> urwid.TextCanvas:
-        logger.info("Start render")
+        logger.info("Start render %s", size)
         '''Render thy contents and return the result'''
         (y, x) = size
         (char, style) = self._render(x, y)
@@ -88,16 +145,11 @@ class fabricGrid(fabric):
         self.m = level.width
         self.level = level
         self.grid = []
-        logger.info("t")
         for i in range(self.n):
             self.grid.append([])
-            logger.info("p")
             for j in range(self.m):
-                logger.info("q")
-                a=level.getField(i, j).neighbours
-                logger.info("o")
+                a=level.getField(i, j)
                 self.grid[i].append(item_square(a))
-                logger.info("r")
                 self.grid[i][j].style = ["magenta", "cyan", ""][(i+j)%3]
    
     def _render(s, x, y):
@@ -118,12 +170,14 @@ class LevelView:
     
     async def loop(self):
         try:
-            logger.info("p1")
             v=fabricGrid()
             v.init(self.level)
-            logger.info("p3")
             tui_main.view.bottom = v
             tui_main.loop.draw_screen()
+            await asyncio.sleep(4)
+            tui_main.add_frame(urwid.Text("£"), 1, 1, 'left')
+            tui_main.loop.draw_screen()
+
             
         except Exception as e:
             logger.error(e)

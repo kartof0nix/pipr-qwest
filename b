@@ -1,0 +1,9 @@
+b
+__init__.py
+playground
+project_notes.md
+__pycache__
+README.md
+res
+src
+tests

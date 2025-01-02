@@ -4,7 +4,11 @@
         "1": {
             "eventOnEnter": "goblinThreat"
         },
-        "2": {},
+        "2": {
+            "items": [
+                "player"
+            ]
+        },
         "3": {},
         "4": {},
         "5": {},
