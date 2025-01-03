@@ -79,7 +79,7 @@ class Level:
         self.fieldDict = {}
         # Initialize fields
         for i in fieldsInit:
-            logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
+            # logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
             self.fieldDict[int(i)] = Field.from_dict(int(i), player=player, cfg=fieldsInit[i])
                 
         #Initialize grid
@@ -98,7 +98,6 @@ class Level:
                         fieldA = grid[i][j]
                         fieldB = grid[i2][j2]
                         if([fieldA, fieldB] in self.graph or [fieldB, fieldA] in self.graph):
-                            logger.debug("Adding %s path from %s to %s ", d, fieldA, fieldB)
                             self.fieldDict[fieldA].neighbours[d] = fieldB
     def getField(self, i, j) -> Field:
         return self.fieldDict[self.grid[i][j]]

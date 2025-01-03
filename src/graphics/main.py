@@ -26,7 +26,13 @@ palette = [("reversed", "standout", ""),
            ("bg", "", "", "", "g7", "#d06"),
            ("cyan", "dark cyan", ""),
            ("magenta","dark magenta", ""),
-           
+           ("default", "", ""),
+           ("pyellow", "yellow,bold", ""),
+           ("pwhite", "white,bold", ""),
+           ("hwhite", "white,bold", ""),
+           ("hred", "dark red,bold", ""),
+           ("hblue", "", "dark blue"),
+           ("hbrown", "", "brown")
            ]
 
 

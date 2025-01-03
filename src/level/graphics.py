@@ -15,6 +15,7 @@ logger = logging.getLogger(__name__)
 TRANSPARENT = None
 AIM_LABEL=['right', 'down', 'left', 'up']
 AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
 class item:
     '''Item to be drawn on canvas'''
     style = ''
@@ -41,7 +42,7 @@ class item:
 
                 if(grid[i][j] != TRANSPARENT):
                     char[i + off_x][j + off_y] = grid[i][j]
-                if(style[i][j] != ''):
+                if(stl[i][j] != ''):
                     style[i + off_x][j + off_y] = stl[i][j]
 
 class texture(item):
@@ -77,6 +78,7 @@ class texture(item):
             for j in range(ty):
                 grid[i+x0][j+y0] = tex[0][i][j]
                 style[i+x0][j+y0] = self.attrmap[tex[1][i][j]]
+        logger.warn("Apply: %s, %s", grid, style)
         return(grid, style)
             
             
@@ -114,8 +116,9 @@ class item_square(item):
             s.used_tiles += [poz]
             tex = texture(it+".json")
             logger.info("Showing texture on %s", str(poz))
-            (x0, y0) = (int((poz[0]*x+3-poz[0]+1)/3), int((poz[1]*y+3-poz[1]+1)/3))
-            (x1, y1) = (int(((poz[0]+1)*x+3-(poz[0]+1)+1)/3), int(((poz[1]+1)*y+3-(poz[1]+1)+1)/3))
+            def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))
+            (x0, y0) = (calc(x, poz[0]), calc(y, poz[1]))
+            (x1, y1) = (calc(x, poz[0]+1), calc(y, poz[1]+1))
             logger.debug("Properties : (%d, %d) (%d, %d) (%d, %d)", x, y, x0, y0, x1, y1)
             tex.apply(x0, y0, x1-x0, y1-y0, out, style)
         return (out, style)
@@ -135,9 +138,10 @@ class fabric(urwid.Widget):
         '''Render thy contents and return the result'''
         (y, x) = size
         (char, style) = self._render(x, y)
+        attr = [[(style[i][j], len(bytes(char[i][j], 'UTF-8'))) for j in range(len(style[0]))] for i in range(len(style))]
         char = [bytes(''.join(i), 'UTF-8') for i in char]
         # result = [''.join([style[i][j] + char[i][j] for j in range(y)]) for i in range(x)]
-        return urwid.TextCanvas(char, attr=[[(style[i][j], 1) for j in range(len(style[0]))] for i in range(len(style))])
+        return urwid.TextCanvas(char, attr=attr)
 
 class fabricGrid(fabric):
     def init(self, level : Level):
@@ -150,7 +154,7 @@ class fabricGrid(fabric):
             for j in range(self.m):
                 a=level.getField(i, j)
                 self.grid[i].append(item_square(a))
-                self.grid[i][j].style = ["magenta", "cyan", ""][(i+j)%3]
+                self.grid[i][j].style = ["magenta", "cyan", "default"][(i+j)%3]
    
     def _render(s, x, y):
         (char, style) = super()._render(x, y)

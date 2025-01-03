@@ -1,7 +1,7 @@
 {
     "attrmap":{
-        "y":"yellow",
-        "w":"white"
+        "y":"pyellow",
+        "w":"pwhite"
     },
     "textutes" : {
         "1x1": [[["ጰ"]], ["y"]],
