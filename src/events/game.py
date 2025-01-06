@@ -1,6 +1,8 @@
 from src.logic.template import ev_template, boolEval
 from src.logic.player import PlayerClass
+from src.common.event_queue import pushEvent
 
+import asyncio
 from typing import List, Tuple
 import logging
 logger = logging.getLogger(__name__)
@@ -38,6 +40,7 @@ class GameEvent(metaclass=RegisterEventMeta):
                 key] = config[key] if key in config else self.defaultConfig[key]
 
     def __call__(self) -> str:
+        pushEvent("event", {"id":self.eventId})
         for (key, template) in self.assignValues:
             self.player[key] = ev_template(template, self.player)
         return self.nextEvent
@@ -54,7 +57,7 @@ class IfEvent(GameEvent):
         self.defaultConfig |= self.localConfig
         super().__init__(eventId, config, player)
 
-    def __call__(self, *args, **kwds) -> str:
+    async def __call__(self, *args, **kwds) -> str:
         super().__call__()
         if(boolEval(self.condition, self.player)):
             return self.eventIdTrue
@@ -73,7 +76,7 @@ class DamageEvent(GameEvent):
         self.defaultConfig |= self.localConfig
         super().__init__(eventId, config, player)
 
-    def __call__(self):
+    async def __call__(self):
         return super().__call__()
 
 
@@ -82,13 +85,20 @@ class menuEvent(GameEvent):
         'entryList': [],
         'eventList': []
     }
-
+    def select(self, entryid=0):
+        self.selection = entryid
+        self.complete.set()
     def __init__(self, eventId: str, config: dict, player : PlayerClass):
         self.defaultConfig |= self.localConfig
+        self.complete = asyncio.Event()
+        self.selection = 0
         super().__init__(eventId, config, player)
 
-    def __call__(self):
-        return super().__call__()
+    async def __call__(self):
+        await self.complete.wait()
+        self.complete.clear()
+        super().__call__()
+        return self.eventList[self.selection]
 
 
 class ConversationEvent(GameEvent):
@@ -99,9 +109,20 @@ class ConversationEvent(GameEvent):
 
     def __init__(self, eventId: str, config: dict, player : PlayerClass):
         self.defaultConfig |= self.localConfig
+        self.current = 0
+        self.complete = asyncio.Event()
         super().__init__(eventId, config, player)
 
-    def __call__(self):
+    def currentLine(self) -> Tuple[str, str]:
+        return self.dialogue[self.current]
+    def nextLine(self) -> Tuple[str, str]:
+        self.current += 1
+        if(self.current >= len(self.dialogue)): self.complete.set()
+
+    async def __call__(self):
+        await self.complete.wait()
+        self.current = 0
+        self.complete.clear()
         return super().__call__()
 
 

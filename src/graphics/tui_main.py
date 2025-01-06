@@ -118,9 +118,7 @@ class MainView(urwid.WidgetPlaceholder):
         # self.open_box(box)
 
         # Run the application with the placeholder
-
     def keypress(self, size, key):
-        logger.info("Pressed %s", key)
         if key in ("q", "Q"):
             raise urwid.ExitMainLoop()
         super().keypress(size, key)
@@ -140,9 +138,10 @@ def add_frame(widget : urwid.Widget, width:int, height:int, side : Literal['left
 def get_frame():
     return view.get_top().original_widget.original_widget.original_widget.original_widget
 
+def rem_frame():
+    view.pop_top()
+    
 
-def null_function(*argv):
-    pass
     
 
 view = MainView()
@@ -152,7 +151,6 @@ def render(callback):
     Render the main view. Since urwid needs to manage asyncio, use callback asyc function to continue execution of main program.
     '''
     urwid.set_encoding("UTF-8")
-    # urwid.widget.validate_size = null_function #It doesn't work. Urwid stupid. I DO NOT CARE
     global loop
     global aloop
     null_widget = urwid.Text(("banner", "Null"), align="center")

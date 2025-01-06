@@ -1,7 +1,7 @@
 from src.logic.player import PlayerClass
 from src.logic.template import ev_template
-from src.events import eventFromDict, GameEvent, registeredEvents
-from src.common.event_queue import push
+from src.events import eventFromDict, launchEvents, registeredEvents
+from src.common.event_queue import pushEvent
 import json
 
 from pathlib import Path
@@ -13,16 +13,6 @@ import asyncio
 from src.common.config import Config, Setting
 logger = logging.getLogger(__name__)
 
-async def runEvent(event : GameEvent):
-    return event()
-
-async def launchEvents(eventId : str):
-    while(eventId != "" and eventId != None):
-        try:
-            event = registeredEvents[eventId]
-            eventId = event()
-        except Exception as e:
-            logger.error("Running event %s failed: %s", eventId, e)
 
 DIRECTIONS = {
     'right' : [0, 1],
@@ -30,6 +20,7 @@ DIRECTIONS = {
     'left' : [0, -1],
     'up' : [-1, 0]
 }
+LEVEL_PATH = "res/levels/"
 
 class Field:
     def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", items:List=[]):
@@ -52,20 +43,22 @@ class Field:
         return res
 
     def enter(self):
+        pushEvent("enter", {"src" : self.num})
         asyncio.create_task(launchEvents(self.eventOnEnter))
 
     def exit(self):
-        asyncio.create_task(launchEvents(self.eventOnExit))
+        pushEvent("exit", {"src" : self.num})
+        asyncio.create_task(launchEvents(self.eventOnLeave))
     
     def inspect(self):
+        pushEvent("inspect", {"src" : self.num})
         asyncio.create_task(launchEvents(self.eventOnInspect))
         
-    async def move(self, direction:str) -> bool:
+    def move(self, direction:str) -> bool:
         if( direction not in self.neighbours ): return False
-        logger.debug("Neighbours of %s : %s", self.player['currentField'], str(self.neighbours))
-        logger.debug("Move %s from %s to %s", direction, self.player['currentField'], self.neighbours[direction])
+        self.exit()
         self.player['currentField'] = self.neighbours[direction]
-        await push("move", {"src" : self.num, "dest":self.neighbours[direction]})
+        pushEvent("move", {"src" : self.num, "dest":self.neighbours[direction]})
         return True
     
         
@@ -103,9 +96,10 @@ class Level:
                             self.fieldDict[fieldA].neighbours[d] = fieldB
     def getField(self, i, j) -> Field:
         return self.fieldDict[self.grid[i][j]]
-    async def move(self, direction : str):
-        res = await self.fieldDict[self.player['currentField']].move(direction)
+    def move(self, direction : str):
+        res = self.fieldDict[self.player['currentField']].move(direction)
         if(not res): return False
+        
         self.fieldDict[self.player['currentField']].enter()
         return True
         
@@ -118,10 +112,9 @@ class Level:
             for j in range(self.width):
                 if(self.grid[i][j] == fieldId): return (i, j)
         return None
-levelsPaths = "res/levels/"
 
 class levelConfig(Config):
-    CONFIG_PATH=Path("res/levels").expanduser()
+    CONFIG_PATH=Path(LEVEL_PATH).expanduser()
 
 """Load level from file"""
 def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> Level:

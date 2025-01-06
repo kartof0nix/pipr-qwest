@@ -2,7 +2,7 @@ from src.graphics import tui_main
 from src.level import Level, Field
 from src.logic.player import PlayerClass
 from src.level.textures import dynamicTexture, itemSquare, PlayerTexture
-from src.common.event_queue import register, unregister
+from src.common.event_queue import registerHandler, unregisterHandler
 from src.level.controls import Control
 # from urwid import Sizing, Widget, BigText, TextCanvas
 
@@ -82,9 +82,9 @@ class fabricGrid(fabric):
 
     async def update(self, params=None):
         '''Update the screen (possibly with animations) based on current game state'''
-        logger.info("Updating screen...")
+        # logger.info("Updating screen...")
         self.playerTexture.update(self.lastSize)
-        logger.info("Finished updating screen...")
+        # logger.info("Finished updating screen...")
         
     def complete(self) -> bool:
         return self.playerTexture.pos == self.playerTexture.next_pos
@@ -100,7 +100,7 @@ class LevelView:
             v.init(self.level, self.controlModule.handleKey)
             tui_main.view.bottom = v
             tui_main.loop.draw_screen()
-            register("move", v.update)
+            registerHandler("move", v.update)
         except Exception as e:
             logger.error(e)
             logger.debug(traceback.format_exc())
@@ -108,7 +108,6 @@ class LevelView:
         while True:
             await asyncio.sleep(1)
     def __init__(self, level : Level):
-        logger.info("p0")
         self.level = level
         self.task = tui_main.aloop.create_task(self.loop())
     def __del__(self):

@@ -5,10 +5,11 @@ Call the package directly to test it.
 import logging
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='qwest.log',
-                        level=logging.DEBUG, filemode="w")
+                        level=logging.INFO, filemode="w")
+
 import asyncio
 from src.graphics import tui_main
-from src.level import callLevel
+from src.level import LevelManager
 from src.logic.player import PlayerClass
 from src.common.event_queue import loop
 
@@ -17,17 +18,11 @@ from src.common.event_queue import loop
 #     print(c)
 # print(a.content())
 async def test():
-    # return
     logger.info(f"Starting test module {__package__}")
     player = PlayerClass("testLevel.json")
-    lvl = callLevel("asriel_den.json", player=player)
+    lvl = LevelManager.callLevel("asriel_den.json", player=player)
     tui_main.aloop.create_task(loop())
-    # await asyncio.sleep(5)
-    # await lvl.move('right')
-    # await asyncio.sleep(5)
-    # await lvl.move('right')
-    # await asyncio.sleep(5)
-    # await lvl.move('down')
-    # await asyncio.sleep(1)
-    # await lvl.move('up')
+    await asyncio.sleep(10)
+    LevelManager.delLevel()
+    # del lvl
 tui_main.render(test)
