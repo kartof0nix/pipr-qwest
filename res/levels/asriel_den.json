@@ -62,7 +62,30 @@
                     [
                         "goblin leader",
                         "Who dare show up in our camp"
+                    ],
+                    [
+                        "Max",
+                        "Sorry to bother, I'm just passing through"
+                    ],
+                    [
+                        "goblin leader",
+                        "No one gets to pass through here without paying a price"
                     ]
+                ],
+                "nextEvent": "goblinChoice"
+            }
+        },
+        {
+            "eventType": "menuEvent",
+            "eventId": "goblinChoice",
+            "params": {
+                "entryList": [
+                    "Fight",
+                    "Run"
+                ],
+                "eventList": [
+                    "",
+                    ""
                 ]
             }
         }

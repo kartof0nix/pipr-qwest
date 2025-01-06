@@ -6,16 +6,16 @@ import logging
 logger = logging.getLogger(__name__)
 
 q = Queue()
-async def push(event : str, params:dict = {}):
-    await q.put((event, params))
+def pushEvent(event : str, params:dict = {}):
+    q.put_nowait((event, params))
 
 registered={}
-def register(event:str, func):
+def registerHandler(event:str, func):
     if event not in registered:
         registered[event] = []
     registered[event] += [func]
     
-def unregister(event:str, func):
+def unregisterHandler(event:str, func):
     try:
         registered[event].pop(registered[event].index(func))
     except Exception as e:
@@ -24,6 +24,7 @@ def unregister(event:str, func):
 async def loop():
     while(True):
         (ev, par) = await q.get()
+        logger.info("Event %s", ev)
         if(ev in registered):
             for f in registered[ev]:
                 tui_main.aloop.create_task(f(par))
