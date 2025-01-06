@@ -1,0 +1,234 @@
+
+from src.common.config import Setting
+from src.level import Level, Field
+from src.graphics import tui_main as tui_main
+
+
+from time import time
+from pathlib import Path
+from typing import Dict, Iterator, List, Literal, Tuple
+
+import json
+import urwid
+import asyncio
+
+import logging
+logger = logging.getLogger(__name__)
+# Urwid.Widget
+
+from random import shuffle
+
+
+TRANSPARENT = None
+AIM_LABEL=['right', 'down', 'left', 'up']
+AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+cfg = Setting(
+    name="Level graphics",
+    defaultValues={
+        "anim speed": 1.0
+    },
+    constrains={
+        "anim speed":{
+            "type" : float,
+            "value_type" : "bound",
+            "min_val" : 0,
+            "max_val" : 5
+        }
+    }
+)
+
+class item:
+    '''Item to be drawn on canvas'''
+    style = ''
+    # def resize(s):
+    #     s.x = x
+    #     s.y = y
+    #     s.off_x = offset_x
+    #     s.off_y = offset_y
+    # def __init__(s, offset_x, offset_y, x, y):
+    #     s.resize(offset_x, offset_y, x, y)
+
+
+    def sketch(s, item_size:Tuple[int, int]) -> Tuple[List[List[chr]], List[List[chr]]]:
+        (x, y) = item_size
+        '''Sketch the item with size (x, y)'''
+        grid = [[None for i in range(y)] for j in range(x)]
+        style = [[s.style for i in range(y)] for j in range(x)]
+        return (grid, style)
+    
+    def apply(s, offset : Tuple[int, int], item_size : Tuple[int, int], char, style):
+        (x, y) = item_size
+        (off_x, off_y) = offset
+        '''Apply the rendered item on canvas (char, style) with offset'''
+        (grid, stl) = s.sketch(item_size)
+        for i in range (x):
+            for j in range (y):
+
+                if(grid[i][j] != TRANSPARENT):
+                    char[i + off_x][j + off_y] = grid[i][j]
+                if(stl[i][j] != ''):
+                    style[i + off_x][j + off_y] = stl[i][j]
+
+class texture(item):
+    '''texture loaded from file, intented to be displayed in one place'''
+    TEXTURE_PATH=Path("res/texture").expanduser()
+    def __init__(self, filename:str):
+        # logger.info("Creating texture %s", filename)
+        self.filename = filename
+        try:
+            with open(self.TEXTURE_PATH.joinpath(filename), "r") as f:
+                data = json.load(f)
+            self.attrmap = data['attrmap']
+            self.textures = data['textutes']
+        except Exception as e:
+            logger.error("Failed to load file: %s", e)
+    def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[chr]], List[List[chr]]]:
+        (x, y) = item_size
+        (grid, style) = super().sketch(item_size)
+        # Find the texture approieate for thy size
+        best = "0x0"
+        for t in self.textures:
+            (tx, ty) = t.split("x")
+            (bx, by) = best.split("x")
+            (tx, ty) = (int(tx), int(ty))
+            (bx, by) = (int(bx), int(by))
+            # logger.info("Looking: %s vs %s", (bx, by), (tx, ty))
+            if(tx <= x and ty <= y and tx+ty >= bx+by):
+                best=t
+        if(best == "0x0"):
+            logger.error("Texture %s has no size suitale for %s", self.filename, item_size)
+            return ([[]], [[]])
+        (tx, ty) = best.split("x")
+        (tx, ty) = (int(tx), int(ty))
+        tex = self.textures[best]
+        # Find middle of drawing area
+        x0 = int((x - tx+1)/2)
+        y0 = int((y - ty+1)/2)
+        #Apply appropieate texture
+        for i in range(tx):
+            for j in range(ty):
+                grid[i+x0][j+y0] = tex[0][i][j]
+                style[i+x0][j+y0] = self.attrmap[tex[1][i][j]]
+        # logger.debug("Apply: %s, %s", grid, style)
+        return(grid, style)
+            
+class dynamicTexture(texture):
+    '''texture loaded from file, intented to have animated movement'''
+    def __init__(self, filename : str, item_size : Tuple[int, int]):
+        self.move_queue = asyncio.Queue()
+        super().__init__(filename)
+        # Keep track of last display parameters
+        self.item_size = item_size
+        self.pos = (None, None)
+        self.prev_pos = (None, None)
+        self.next_pos = (None, None)
+        self.loopTask = tui_main.aloop.create_task(self.move_loop())
+    def cancel_anim(self):
+        while(not self.move_queue.empty()): self.move_queue.get_nowait() 
+        self.loopTask.cancel()
+        self.loopTask = tui_main.aloop.create_task(self.move_loop())
+    def resize(self, item_size : Tuple[int, int]):
+        if(self.item_size != item_size):
+            #Stop any animation as resize may cause it to be distorted
+            self.cancel_anim()
+            self.pos = self.next_pos
+            self.item_size=item_size
+            # urwid.CanvasCache.clear()
+            # tui_main.loop.draw_screen()
+            
+    async def move_loop(self):
+        while(True):
+            target_offset = await self.move_queue.get()
+            if(self.pos == (None, None)): self.pos = target_offset
+            self.prev_pos = self.pos
+            self.next_pos = target_offset
+            
+            start = time()
+            end = start + cfg["anim speed"]
+            delay = cfg["anim speed"] / 1000
+            while(time() < end):
+                (dx, dy) = (self.next_pos[0] - self.prev_pos[0], self.next_pos[1] - self.prev_pos[1])
+                prog = min((time() - start) / cfg["anim speed"], 1)
+                self.pos = (int(self.prev_pos[0] + dx * prog ), int(self.prev_pos[1] + dy * prog))
+                urwid.CanvasCache.clear()
+                tui_main.loop.draw_screen()
+                await asyncio.sleep(delay)
+            self.pos = self.next_pos
+            urwid.CanvasCache.clear()
+            tui_main.loop.draw_screen()
+        
+    def move_instant(self, target_offset : Tuple[int, int]):
+        self.cancel_anim()
+        self.pos = target_offset
+        self.prev_pos = target_offset
+        self.next_pos = target_offset
+    
+    def move_anim(self, target_offset : Tuple[int, int]):
+        self.move_queue.put_nowait(target_offset)
+    def apply(s, offset : Tuple[int, int], item_size : Tuple[int, int], char, style):
+        #Save-check resize
+        s.resize(item_size)
+        return super().apply(offset, item_size, char, style)
+    def apply_anim(self, char, style):
+        # logger.info("Apllying anim %s", self.pos)
+        '''Ignores argument offset and size, use functions resize and move to animate'''
+        if(self.pos == (None, None)): return
+        return self.apply((self.pos[0], self.pos[1]), self.item_size, char, style)
+        # super().__init__()
+      
+class PlayerTexture(dynamicTexture):
+    def __init__(self, level : Level, size : Tuple[int, int] = (0, 0)):
+        self.level = level
+        super().__init__("player.json", size)
+    def update(self, grid_size : Tuple[int, int], instant:bool=False):
+        (x, y) = grid_size
+        self.resize((x//self.level.height//3, y//self.level.width//3))
+        field = self.level.player['currentField']
+        (gx, gy) = self.level.get_cord(field)
+        (off_x, off_y) = (x * (gx+1/3) / self.level.height, y * (gy+1/3) / self.level.width)
+        # logger.info("Drawing player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
+        if(not instant):
+            self.move_anim((int(off_x), int(off_y)))
+        else:
+            self.move_instant((int(off_x), int(off_y)))
+
+class itemSquare(item):
+
+    def __init__(s, field : Field):
+        # super().__init__()
+        s.field = field
+        s.paths = [bool(i in field.neighbours) for i in AIM_LABEL]
+        # s.paths = paths
+        s.used_tiles = []
+
+    def sketch(s, item_size:Tuple[int, int]):
+        (x, y) = item_size
+        grid = [[0 for i in range(3)] for j in range(3)]
+        grid[1][1]=1
+        for i in range(4):
+            grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = s.paths[i]
+
+        out = [['.' if grid[i*3//x][j*3//y] else '#' for j in range(y)] for i in range(x)]
+
+        style = [[s.style for i in range(y)] for i in range(x)]
+        available_tiles = [(i, j) if not grid[i][j] and (i, j) not in s.used_tiles  else None for j in range(3) for i in range(3)] 
+        while None in available_tiles:
+            available_tiles.remove(None)
+        shuffle(available_tiles)
+        shuffle(available_tiles)
+        tile_queue = s.used_tiles + available_tiles
+        s.used_tiles=[]
+        # logger.info(available_tiles)
+        for it in s.field.items:
+            
+            poz = tile_queue[0]
+            tile_queue.remove(poz)
+            s.used_tiles += [poz]
+            tex = texture(it+".json")
+            def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))
+            (x0, y0) = (calc(x, poz[0]), calc(y, poz[1]))
+            (x1, y1) = (calc(x, poz[0]+1), calc(y, poz[1]+1))
+            # logger.debug("Properties : (%d, %d) (%d, %d) (%d, %d)", x, y, x0, y0, x1, y1)
+            tex.apply((x0, y0), (x1-x0, y1-y0), out, style)
+        return (out, style)

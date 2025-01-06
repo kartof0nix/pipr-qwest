@@ -123,6 +123,7 @@ class MainView(urwid.WidgetPlaceholder):
         logger.info("Pressed %s", key)
         if key in ("q", "Q"):
             raise urwid.ExitMainLoop()
+        super().keypress(size, key)
 
     def selectable(self):
         return True
