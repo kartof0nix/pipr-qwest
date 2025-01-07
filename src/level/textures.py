@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 # Urwid.Widget
 
 from random import shuffle
+import random
 
 
 TRANSPARENT = "\t"
@@ -94,9 +95,8 @@ class texture(item):
                 # logger.info( " Texture %s : '%s' => '%s'", filename, self.textures[t][0][0], bytes(self.textures[t][0][0], 'UTF-8'))
         except Exception as e:
             logger.error("Failed to load file: %s", e)
-    def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[str]], List[List[str]]]:
+    def getSize(self, item_size:Tuple[int, int]):
         (x, y) = item_size
-        (grid, style) = super().sketch(item_size)
         # Find the texture approieate for thy size
         best = "0x0"
         for t in self.textures:
@@ -112,7 +112,13 @@ class texture(item):
             return ([[]], [[]])
         (tx, ty) = best.split("x")
         (tx, ty) = (int(tx), int(ty))
-        tex = self.textures[best]
+        return (tx, ty)
+        
+    def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[str]], List[List[str]]]:
+        (x, y) = item_size
+        (tx, ty) = self.getSize(item_size)
+        (grid, style) = super().sketch(item_size)
+        tex = self.textures[str(tx)+'x'+str(ty)]
         # Find middle of drawing area
         x0 = int((x - tx+1)/2)
         y0 = int((y - ty+1)/2)
@@ -230,7 +236,7 @@ class itemSquare(item):
         self.seed = self.field.num
         self.bg_style=["magenta", "cyan", "default"][self.seed%3]
         self.fg_style=["magenta", "cyan", "default"][(self.seed+1)%3]
-
+        self.decorations = list(self.field.decorations)
         self.update_paths()
         
     def update_paths(self):
@@ -248,8 +254,8 @@ class itemSquare(item):
         return ((x0, y0), (x1-x0, y1-y0))
         
     def is_empty(self, poz:Tuple[int, int], size:Tuple[int, int], char:List[List[str]]):
-        for i in range(poz[0], poz[0]+size[0]+1):
-            for j in range(poz[1], poz[1]+size[1]+1):
+        for i in range(poz[0], poz[0]+size[0]):
+            for j in range(poz[1], poz[1]+size[1]):
                 if(char[i][j] != self.bg):
                     return False
         return True
@@ -257,29 +263,31 @@ class itemSquare(item):
     def sketch(self, item_size:Tuple[int, int]):
         if(self.cache != None and self.cacheSize == item_size):
             return self.cache
+        self.cacheSize = item_size
         self.cache = self._sketch(item_size)
         return self.cache
     
     def _sketch(self, item_size:Tuple[int, int]):
+        rnd = random.Random(self.seed)
         (x, y) = item_size
         out   = [[self.fg if self.grid[i*3//x][j*3//y] else self.bg for j in range(y)] for i in range(x)]
         style = [[self.fg_style if self.grid[i*3//x][j*3//y] else self.bg_style for j in range(y)] for i in range(x)]
+        max_size = (item_size[0]//3, item_size[1]//3)
 
-        available_tiles = [(i, j) if not self.grid[i][j] and (i, j) not in self.used_tiles  else None for j in range(3) for i in range(3)] 
-        while None in available_tiles:
-            available_tiles.remove(None)
-        shuffle(available_tiles)
-        shuffle(available_tiles)
-        tile_queue = self.used_tiles + available_tiles
-        self.used_tiles=[]
-        # logger.info(available_tiles)
-        for it in self.field.decorations:
-            poz = tile_queue[0]
-            tile_queue.remove(poz)
-            self.used_tiles += [poz]
-            tex = texture(it+".json")
-            (p0, s) = self.cords_to_pos(item_size, poz)
-            tex.apply(p0, s, out, style)
+        # Apply decorations
+        for it in self.decorations:
+            dec = texture(it+".json")
+            (dec_x, dec_y) = dec.getSize(max_size)
+            poz = (rnd.randint(0, x-dec_x), rnd.randint(0, y-dec_y))
+            for i in range(100):
+                # logger.info("Checking poz=%s, dec=%s, grid=%s", poz, (dec_x, dec_y), item_size)
+                if(not self.is_empty(poz, (dec_x, dec_y), out)):
+                    poz = (rnd.randint(0, x-dec_x), rnd.randint(0, y-dec_y))
+                else: break
+            if(not self.is_empty(poz,  (dec_x, dec_y), out)):
+                logger.info("Field %s could not draw decoration %s", self.field.num, dec)
+            logger.info("dec %s, %s, %s", item_size, poz, (dec_x, dec_y))
+            dec.apply(poz, (dec_x, dec_y), out, style)
         return (out, style)
 
 class itemSquareForest(itemSquare):
@@ -290,8 +298,18 @@ class itemSquareForest(itemSquare):
         self.bg_style = 'green'
         self.fg_style = 'default'
         self.seed = self.field.num + int(bytes(self.field.player['currentField']).hex(), 16)
-    def sketch(s, item_size):
-        (out, style) = super().sketch(item_size)
+        self.decorations 
+    def _sketch(self, item_size):
+        rnd = random.Random(self.seed)
+        dec = texture("tree.json")
+        max_size = (item_size[0]//3, item_size[1]//3)
+        dec_size = dec.getSize(max_size)
+        max_deco = (6*max_size[0]*max_size[1]) // int((dec_size[0]*dec_size[1])**(1.2))
+        now_deco = rnd.randint(1, max_deco)
+        self.decorations += ["tree"]*now_deco
+        (out, style) = super()._sketch(item_size)
+        self.decorations = self.decorations[:-now_deco]
+        
         return (out, style)
         
 squareThemes = {
