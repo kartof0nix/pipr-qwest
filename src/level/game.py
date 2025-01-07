@@ -23,24 +23,24 @@ DIRECTIONS = {
 LEVEL_PATH = "res/levels/"
 
 class Field:
-    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", items:List=[]):
+    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", decorations:List=[]):
         self.ev_task = None
         self.num = num
         self.neighbours = dict(neighbours)
         self.eventOnEnter = eventOnEnter
         self.eventOnInspect = eventOnInspect
         self.eventOnLeave = eventOnLeave
-        self.items = items
+        self.decorations = decorations
         
     @classmethod
     def from_dict(self, num:int, player, cfg:Dict):
-        res = Field(player, num)
+        res = Field(player=player, num=num)
         self.player = player
         if ('neighbours') in cfg: res.neighbours = cfg['neighbours']     
         if ('eventOnEnter') in cfg: res.eventOnEnter = cfg['eventOnEnter']     
         if ('eventOnInspect') in cfg: res.eventOnInspect = cfg['eventOnInspect']     
         if ('eventOnLeave') in cfg: res.eventOnLeave = cfg['eventOnLeave']     
-        if ('items') in cfg: res.items = cfg['items']     
+        if ('decorations') in cfg: res.decorations = cfg['decorations']     
         return res
 
     def enter(self):
@@ -130,15 +130,15 @@ def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> L
         {
             "name" : filename,
             "fields" : {},
-            "startField": 1,
+            "startField": None,
             "graph" : [],
             "grid": [[1]],
             "events" : {}
         } 
     )
     try:
-        # for event in s.events
-        if(startField == None): startField = s['startField']
+        if(startField == None): startField = s['startField'] # startField <- level config  
+        if(startField == None): startField = player['currentField']
         logger.debug(s.config)
         lvl = Level(player=player,
                     name=s['name'],

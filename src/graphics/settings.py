@@ -5,7 +5,8 @@ from typing import List, Any
 import urwid
 from collections.abc import Iterable
 from src.common.config import Setting, registered_settings
-from src.graphics.common import CustomButton, buttonAttr
+from src.graphics import tui_main
+from src.graphics.common import CustomButton, buttonAttr, niceFiller
 
 import logging
 logger = logging.getLogger(__name__)
@@ -126,25 +127,10 @@ class SettingsView(urwid.Pile):
         # super().__init__(widget_list, focus_item)
 
 
-
-# logger.info("Ses: %s", registered_settings)
-
-# ses = 
-def render():
-
-    main = urwid.Padding(ses, left=2, right=2)
-
-    top = urwid.Overlay(
-        main,
-        urwid.SolidFill("\N{MEDIUM SHADE}"),
-        align=urwid.CENTER,
-        width=(urwid.RELATIVE, 60),
-        valign=urwid.MIDDLE,
-        height=(urwid.RELATIVE, 60),
-        min_width=20,
-        min_height=9,
-    )
-    palette = [("reversed", "standout", ""), ("button", "light cyan", ""), ("reversed_button", "black", "light cyan")]
-    
-    urwid.MainLoop(top, palette=palette).run()
-# render()
+async def launchSettings():
+    lastBottom = tui_main.view.bottom
+    settings = SettingsView(registered_settings)
+    tui_main.view.bottom = niceFiller(settings)
+    await settings.exitted.wait()
+    tui_main.view.bottom = lastBottom
+            

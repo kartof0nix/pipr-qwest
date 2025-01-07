@@ -14,5 +14,5 @@ class Control:
             self.level.move(key)
         if(key=='i'):
             self.level.inspect()
-        if(key=='q'):
+        if(key=='esc'):
             event_queue.pushEvent("gameover")

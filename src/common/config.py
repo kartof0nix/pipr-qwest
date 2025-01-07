@@ -60,7 +60,7 @@ class Config:
                 logger.info("Key %s not defined in config %s", key, self.fpath )
         for name, item_data in data.items():
             try:
-                logger.debug("Setting %s = %s", name, item_data)
+                logger.info("Setting %s = %s", name, item_data)
                 self.set_value(name, item_data)
             except KeyError:
                 logger.warning("Config file %s contains invalid key %s", self.fpath, self.name)

@@ -1,18 +1,11 @@
-from typing import Literal
+from typing import Literal, Tuple
 import urwid
 import asyncio
 
+'''Main view class - the manager for widgets, views and general configuration'''
 
 import logging
 logger = logging.getLogger(__name__)
-
-text = """Initially, Pomni has a high-strung, timid, and tense demeanor. In the pilot episode, she is shown to be extremely anxious and troubled regarding her predicament, even succumbing to denial and exhibiting signs of delusion. When she finds the "exit", she experiences moderate signs of paranoia and seems to believe she is hallucinating. She's also on the clumsy side, as she tends to accidentally bump into things and people.
-
-In her initial appearance, Pomni is shown to have a degree of both empathy and selfishness, as she goes back to check on Ragatha after the latter was attacked by an abstracted Kaufmo and promises Ragatha that she'd find Caine to fix her. However, Pomni's desire to escape the digital circus overrode this, as she entered the exit door upon finding it and left Ragatha behind. She later felt remorse for this action once Ragatha was fixed by Caine.
-
-After having somewhat come to terms with her circumstances, Pomni adopts a more apathetic and cynical view, pointing out discrepancies in the Circus's scenarios and being detached from the adventures, not seeing the point in following along. She also seems to be more hot-tempered as she yells at the gang (specifically Jax) for their plans leaving her in mortal peril. Despite this, Pomni seems rather compassionate as she comforts and bonds with Gummigoo during his existential crisis, encouraging him by telling him he still has purpose and even inviting him to follow her back to the Circus. Overtime Pomni grew closer to the others after seeing how much they cared for each other during Kaufmo's funeral, and after receiving sound advice from Kinger (who temporarily regained his sanity), she thanked Ragatha for always being considerate to her and apologized for not showing appreciation until that moment.
-
-Later in episode 4, she seems to have adapted more to being in the circus. She sees Gummigoo again and doesn't breakdown, she enters normal conversations with people like Jax, and shows concern for Gangle, asking if anyone could help her with her issues. She even offers to stay behind to close the restaurant when she sees that Gangle is sad. """
 
 # async def test():
 
@@ -35,8 +28,9 @@ palette = [("reversed", "standout", ""),
            ("pwhite", "white,bold", ""),
            ("hwhite", "white,bold", ""),
            ("hred", "dark red,bold", ""),
-           ("hblue", "", "dark blue"),
-           ("hbrown", "black", "brown")
+           ("hblue", "dark blue,bold", ""),
+           ("hbrown", "black", "brown"),
+           ("green", "dark green", "")
            ]
 class myOverlay(urwid.Overlay):
     def keypress(self, size, key):
@@ -44,28 +38,35 @@ class myOverlay(urwid.Overlay):
         if(key != None):
             return self.bottom_w.keypress(size, key)
 
-class blockBoxAdapter(urwid.BoxAdapter):
+class blockLineBock(urwid.LineBox):
     def keypress(self, size, key):
         key = super().keypress(size, key)
         if(key != None and not key in ['up', 'down', 'left', 'right', 'i']):
             return key
     
 class MainView(urwid.WidgetPlaceholder):
-    
+    def is_overlayed(self):
+        return type(self.main_placeholder.original_widget) == myOverlay
     def get_top(self):
         return self.main_placeholder.original_widget.top_w
 
     def pop_top(self):
         logger.debug("Popping top overlay. Current top : %s",
                      repr(self.main_placeholder.original_widget))
-        if (type(self.main_placeholder.original_widget) != myOverlay):
+        if not(self.is_overlayed()):
             logger.error(
                 "Attempted to pop overlay whilst no overlay is active.")
             return
         self.main_placeholder.original_widget = self.main_placeholder.original_widget.bottom_w
         loop.draw_screen()
     
-    def push_top(self, widget: urwid.Widget, width: int, height: int, halign: Literal["left", "center", "right"], valign=Literal['top', 'middle', 'bottom']):
+    def push_top(self,
+                widget: urwid.Widget,
+                width: Literal["pack"] | int | tuple[Literal["relative"], int] | None,
+                height: int | tuple[Literal["relative"], int] | None,
+                halign: Literal["left", "center", "right"],
+                valign=Literal['top', 'middle', 'bottom']
+    ):
         placeholder = self.main_placeholder
         logger.debug("Pushing %s. Current top placeholder : %s",
                      repr(widget), repr(self.main_placeholder))
@@ -84,37 +85,7 @@ class MainView(urwid.WidgetPlaceholder):
         logger.debug("New back placeholder : %s", repr(ov))
         self.main_placeholder.original_widget = ov
         loop.draw_screen()
-        return
-        if (side == "left"):
-            pass
-        if (side == "right"):
-            ov = myOverlay(
-                placeholder.original_widget,
-                widget,
-                'right',
-                width,
-                valign="middle",
-                right=2
-            )
-        if (side == "top"):
-            ov = myOverlay(
-                placeholder.original_widget,
-                widget,
-                'top',
-                width,
-                align="middle",
-                top=2
-            )
-        if (side == "bottom"):
-            ov = myOverlay(
-                placeholder.original_widget,
-                widget,
-                'bottom',
-                width,
-                align="middle",
-                bottom=2
-            )
-
+        
     @property
     def bottom(self) -> urwid.Widget:
         return self.bottom_placeholder.original_widget
@@ -143,17 +114,27 @@ class MainView(urwid.WidgetPlaceholder):
         return True
 
 
-def add_frame(widget : urwid.Widget, width:int, height:int, side : Literal['left', 'top', 'right', 'bottom'], title="", block_move=False):
-    halign = {'left':'left', 'top':'center', 'right':'right', 'bottom':'center'}[side]
-    valign = {'left':'middle', 'top':'top', 'right':'middle', 'bottom':'bottom'}[side]
-    if not block_move:
-        fixed_height_content = urwid.BoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+def add_frame(
+    widget : urwid.Widget,
+    width: Literal["pack"] | int | tuple[Literal["relative"], int] | None,
+    height: int | tuple[Literal["relative"], int] | None,
+    side : Literal['left', 'top', 'right', 'bottom'] | Tuple[Literal['left', 'center', 'bottom'], Literal['top', 'middle', 'bottom']],
+    title:str="",
+    block_move:bool=False
+):
+    if(type(side) == tuple):
+        (halign, valign) = side
     else:
-        fixed_height_content = blockBoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+        halign = {'left':'left', 'top':'center', 'right':'right', 'bottom':'center'}[side]
+        valign = {'left':'middle', 'top':'top', 'right':'middle', 'bottom':'bottom'}[side]
+    if not block_move:
+        line_box = urwid.LineBox(urwid.Filler(widget, valign="top"), title)
+    else:
+        line_box = blockLineBock(urwid.Filler(widget, valign="top"), title)
         
-    line_box_widget = urwid.Filler(urwid.LineBox(fixed_height_content, title))
-    logger.info(line_box_widget.sizing())
-    view.push_top(line_box_widget, width=width+2, height=height+2, halign=halign, valign=valign)
+    # filler = urwid.Filler(line_box)
+    
+    view.push_top(line_box, width=width+2 if type(width)==int else width, height=height+2 if type(height)==int else height, halign=halign, valign=valign)
 
 def get_frame():
     return view.get_top().original_widget.original_widget.original_widget.original_widget
@@ -189,7 +170,6 @@ def render(callback, exitFunction):
     loop.run()
     
 
-'''Main asyncio event loop'''
 # global aloop
 # aloop = None
 # global loop

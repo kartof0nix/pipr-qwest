@@ -9,6 +9,7 @@ from src.logic.player import PlayerClass
 
 import asyncio
 import logging
+import traceback
 logger = logging.getLogger(__name__)
 
 class LevelManagerClass:
@@ -20,6 +21,7 @@ class LevelManagerClass:
         event_queue.registerHandler("gameover", self.gameOverListener)
     def callLevel(self, filename : str, player : PlayerClass, startField=None):
         asyncio.create_task(self._callLevel(filename, player=player, startField=startField))
+
     async def _callLevel(self, filename : str, player : PlayerClass, startField=None) -> Level:
         try:
             self.lvl = loadLevel(filename, player=player, startField=startField)
@@ -29,6 +31,7 @@ class LevelManagerClass:
             self.exitEvent.clear()
         except Exception as e:
             logger.error("Running level failed: %s", e)
+            logger.error("Traceback : %s", traceback.format_exc())
 
     def delLevel(self):
         self.exitEvent.set()
@@ -38,6 +41,7 @@ class LevelManagerClass:
     
     async def _changeLevel(self, nextLevel : str, nextField:int = None):
         player = self.lvl.player
+        player['currentLevel'] = nextLevel
         self.delLevel()
         while self.exitEvent.is_set():
             await asyncio.sleep(0.1)

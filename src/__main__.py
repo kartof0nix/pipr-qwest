@@ -14,12 +14,14 @@ from src.graphics import tui_main
 from src.level import LevelManager
 from src.logic.player import PlayerClass
 from src.common import event_queue
-from src.graphics.settings import SettingsView, registered_settings
+from src.graphics.settings import launchSettings
 from src.graphics.common import buttonAttr, buttonAttr2, niceFiller
 # a = fabricCanvas([["a", "b"], ["c", "d"]], [["", ""], ["", ""]])
 # for c in a.content():
 #     print(c)
 # print(a.content())
+
+
 
 class editWindow(urwid.Edit):
     def __init__(self, caption = "", edit_text = "", multiline = False):
@@ -33,6 +35,7 @@ class editWindow(urwid.Edit):
     async def get(self):
         await self.complete.wait()
         return self.get_edit_text()
+
 class SelectSaveView(urwid.Pile):
     async def _select(self, butt:urwid.Button):
         self.res = butt.get_label()
@@ -68,30 +71,25 @@ class SelectSaveView(urwid.Pile):
         await self.selected.wait()
         return self.res
     
+async def launchSelect():
+    res = None
+    lastBottom = tui_main.view.bottom
+    while(res == None):
+        sel = SelectSaveView()
+        tui_main.view.bottom = niceFiller(sel)
+        res = await sel.choice()
+    tui_main.view.bottom = lastBottom
+    asyncio.create_task(main.startGame(res))
+
+
+            
 class MainView(urwid.Pile):
-    async def launchSelect(self):
-        res = None
-        lastBottom = tui_main.view.bottom
-        while(res == None):
-            sel = SelectSaveView()
-            tui_main.view.bottom = niceFiller(sel)
-            res = await sel.choice()
-        tui_main.view.bottom = lastBottom
-        asyncio.create_task(main.startGame(res))
-    
-    async def launchSettings(self):
-        lastBottom = tui_main.view.bottom
-        settings = SettingsView(registered_settings)
-        tui_main.view.bottom = niceFiller(settings)
-        await settings.exitted.wait()
-        tui_main.view.bottom = lastBottom
-                
     def playButton(self, butt : urwid.Button):
-        asyncio.create_task(self.launchSelect())
+        asyncio.create_task(launchSelect())
     def exitButton(self, butt : urwid.Button):
         raise urwid.ExitMainLoop()
     def settingsButton(self, butt : urwid.Button):
-        asyncio.create_task(self.launchSettings())
+        asyncio.create_task(launchSettings())
         
     def __init__(self):
         menu = urwid.Pile([
@@ -131,13 +129,9 @@ class Main:
         file.unlink()
         
     async def startGame(self, save:str):
-        logger.info(f"Starting game %s", registered_settings)
-        # tui_main.view.bottom = SettingsView(registered_settings)
         self.player = PlayerClass(save + ".json")
         lvl = LevelManager.callLevel(self.player['currentLevel'], player=self.player)
-
         logger.info(f"Game loaded")
-        tui_main.aloop.create_task(event_queue.loop())
     # async 
     #     await asyncio.sleep(10)
     #     logger.info(f"Del gameq")
@@ -150,6 +144,7 @@ main = Main()
 mainView = MainView()
 
 async def loadMainView():
+    tui_main.aloop.create_task(event_queue.loop())
     tui_main.view.bottom=niceFiller(mainView)
 tui_main.render(loadMainView, main.exit)
 

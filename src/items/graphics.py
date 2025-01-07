@@ -1,7 +1,7 @@
 
 from src.events.game import GameEvent, ConversationEvent, DamageEvent
 from src.graphics import tui_main
-from src.graphics.common import CustomButton, notificationWidget
+from src.graphics.common import CustomButton
 from src.graphics.common import buttonAttr
 import urwid
 import asyncio
@@ -34,10 +34,24 @@ class GameEventTUI(metaclass=RegisterEventTUIMeta):
         pass
 
 class notifyEventTUI(GameEventTUI):
+    def makeWidget(self):
+        self.y = len(self.text)+5
+        self.x=2
+        return urwid.Pile([(urwid.Text(('cyan', self.text))), urwid.Filler(buttonAttr(urwid.Button("Ok", self.keypress )))])
+    def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:    #         logger.info("UwuSync Sleeping")
+        if(key in [" ", "enter"]):
+            self.event.complete.set()
+            return None
+        return key
+
     def __enter__(self):
-        tui_main.add_frame(notificationWidget(self.text, self.event.complete.set), len(self.text)+10, 3, ('center', 'middle'), 'Notification', True)
+        logger.info("Entering TUI!")
+        self.widget=self.makeWidget()
+        self.widget.keypress = self.keypress
+        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Notification', True)
         pass
     def __exit__(self, exc_type, exc_value, traceback):
+        logger.info("Exitting TUI!")
         tui_main.rem_frame()
         pass
 
@@ -49,7 +63,7 @@ class DamageEventTUI(notifyEventTUI):
 class changeLevelEventTUI(notifyEventTUI):
     def __init__(self, event : DamageEvent):
         super().__init__(event)
-        self.text = f"You have found a passage to {self.event.nextLevel.removesuffix(".json").replace('_', ' ').capitalize()}"
+        self.text = f"You have found a passage to {self.event.nextLevel}"
 # class DamageEvent(GameEvent):
 #     localConfig = {
 #         'health': 0,

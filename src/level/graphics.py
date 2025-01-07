@@ -1,7 +1,9 @@
 from src.graphics import tui_main
+from src.graphics.common import notify
+from src.graphics.pauseMenu import PauseMenu
 from src.level import Level, Field
 from src.logic.player import PlayerClass
-from src.level.textures import dynamicTexture, itemSquare, PlayerTexture
+from src.level.textures import dynamicTexture, current_itemSquare, PlayerTexture
 from src.common.event_queue import registerHandler, unregisterHandler
 from src.level.controls import Control
 from src.level.overlay import overlayWidget
@@ -30,7 +32,6 @@ class fabric(urwid.Widget):
         return(char, style)
     
     def render(self, size : tuple[int, int], focus: bool = False) -> urwid.TextCanvas:
-        # logger.info("Start render %s", size)
         '''Render thy contents and return the result'''
         (y, x) = size # Urwid stores the coordinates swapped, so swap them back on integration
         (grid, style) = self._render((x, y))
@@ -50,22 +51,27 @@ class fabric(urwid.Widget):
                         attr[i][-1] = (style[i][j], attr[i][-1][1] + len(bytes(grid[i][j][0], 'UTF-8')))
                     else:
                         attr[i].append((style[i][j], len(bytes(grid[i][j][0], 'UTF-8'))))
-                # else:
-                    # logger.info("Skipped '%s'", grid[i][j])
             #Urwid be stupid, I Don't f***ing care, let's get it over with and fix it manually
             while(str_util.calc_width(char[i], 0, len(char[i])) > y):
                 char[i] = char[i][0:-1]
                 attr[i][-1] = (attr[i][-1][0], attr[i][-1][1]-1)
 
-            # if(i==1): logger.info(char[i])
-            # if(i==1): logger.info(char[i].decode('UTF-8'))
         # result = [''.join([style[i][j] + char[i][j] for j in range(y)]) for i in range(x)]
         self._invalidate()
         return urwid.TextCanvas(char, attr=attr)
 
     # def add_dynamic_texture(self, dt : dynamicTexture):
     #     self.dynamic_textures.append(dt)
+
+notified=False
+async def notifyTooSmall():
+    global notified
+    if(not notified):
+        notified=True
+        await notify("Terminal too small for this level").confirmed.wait()
+        notified=False
         
+
 class fabricGrid(fabric):
     _selectable=True
     def init(self, level : Level, handlekey):
@@ -81,17 +87,18 @@ class fabricGrid(fabric):
             self.grid.append([])
             for j in range(self.m):
                 a=level.getField(i, j)
-                self.grid[i].append(itemSquare(a))
-                self.grid[i][j].style = ["magenta", "cyan", "default"][(i+j)%3]
+                self.grid[i].append(current_itemSquare()(a))
    
     def _render(self, size:Tuple[int, int]):
         (x, y) = size
-        # logger.info("Render Grid %d x %d", x, y)
         if(self.lastSize != (x, y)):
             self.lastSize = (x, y)
             self.playerTexture.update(size, instant=True)
             #Re-size all dynamic textures and re-calculate 
         (char, style) = super()._render(size)
+        if(self.level.width * 3 > y or self.level.height * 3 > x):
+            asyncio.create_task(notifyTooSmall())
+            return (char, style)
         for i in range(self.n):
             for j in range(self.m):
                 x0 = x * i // self.n
@@ -105,14 +112,14 @@ class fabricGrid(fabric):
 
     async def update(self, params=None):
         '''Update the screen (possibly with animations) based on current game state'''
-        # logger.info("Updating screen...")
         self.playerTexture.update(self.lastSize)
-        # logger.info("Finished updating screen...")
         
     def complete(self) -> bool:
         return self.playerTexture.pos == self.playerTexture.next_pos
     def keypress(self, size, key):
-        if(self.complete() ):
+        if(key == "esc"):
+            tui_main.add_frame(PauseMenu(self.level.player), ('relative', 80), ('relative', 70), ('center', 'middle'), "Pause menu")
+        elif(self.complete()):
             return self.handlekey(key)
     def stopTasks(self):
         self.playerTexture.cancel_anim()
@@ -127,15 +134,16 @@ class LevelView:
             self.last_bottom = tui_main.view.bottom
             tui_main.view.bottom = self.fabric
             overlay = overlayWidget(self.level.player)
-            tui_main.add_frame(overlay, overlay.getSize()[1], overlay.getSize()[0], 'left')
+            tui_main.add_frame(overlay, overlay.getSize()[1], overlay.getSize()[0], ('left', 'top'))
             tui_main.loop.draw_screen()
             registerHandler("move", self.fabric.update)
         except Exception as e:
             logger.error(e)
-            logger.debug(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
     def __exit__(self, exception_type, exception_value, exception_traceback):
         self.fabric.stopTasks()
         tui_main.view.bottom = self.last_bottom
-        tui_main.rem_frame()
+        while(tui_main.view.is_overlayed()):
+            tui_main.rem_frame()
         

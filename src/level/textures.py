@@ -27,7 +27,8 @@ AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 cfg = Setting(
     name="Level graphics",
     defaultValues={
-        "anim speed": 1.0
+        "anim speed": 1.0,
+        "theme":"default"
     },
     constrains={
         "anim speed":{
@@ -35,6 +36,11 @@ cfg = Setting(
             "value_type" : "bound",
             "min_val" : 0,
             "max_val" : 5
+        },
+        "theme":{
+            "type" : str,
+            "value_type" : "selectable",
+            "selectable" : ["default", "forest"]
         }
     }
 )
@@ -208,41 +214,89 @@ class PlayerTexture(dynamicTexture):
             logger.error('Update dailed : %s, to field:%s ', e, self.level.player['currentField'])
 
 class itemSquare(item):
-
-    def __init__(s, field : Field):
+    bg='#'
+    fg='.'
+    bg_style = ''
+    fg_style = ''
+    
+    def __init__(self, field : Field):
         # super().__init__()
-        s.field = field
-        s.paths = [bool(i in field.neighbours) for i in AIM_LABEL]
-        # s.paths = paths
-        s.used_tiles = []
+        self.cache = None
+        self.cacheSize = None
+        self.field = field
+        self.paths = [bool(i in field.neighbours) for i in AIM_LABEL]
+        self.used_tiles = []
 
-    def sketch(s, item_size:Tuple[int, int]):
-        (x, y) = item_size
-        grid = [[0 for i in range(3)] for j in range(3)]
-        grid[1][1]=1
+        self.seed = self.field.num
+        self.bg_style=["magenta", "cyan", "default"][self.seed%3]
+        self.fg_style=["magenta", "cyan", "default"][(self.seed+1)%3]
+
+        self.update_paths()
+        
+    def update_paths(self):
+        self.grid = [[0 for i in range(3)] for j in range(3)]
+        self.grid[1][1]=True
         for i in range(4):
-            grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = s.paths[i]
+            self.grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = self.paths[i]
+        if(not True in self.paths): self.grid[1][1]=False
+        
+    def cords_to_pos(self, item_size:Tuple[int, int], cord:Tuple[int, int]) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+        (x, y) = item_size
+        def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))
+        (x0, y0) = (calc(x, cord[0]), calc(y, cord[1]))
+        (x1, y1) = (calc(x, cord[0]+1), calc(y, cord[1]+1))
+        return ((x0, y0), (x1-x0, y1-y0))
+        
+    def is_empty(self, poz:Tuple[int, int], size:Tuple[int, int], char:List[List[str]]):
+        for i in range(poz[0], poz[0]+size[0]+1):
+            for j in range(poz[1], poz[1]+size[1]+1):
+                if(char[i][j] != self.bg):
+                    return False
+        return True
+    
+    def sketch(self, item_size:Tuple[int, int]):
+        if(self.cache != None and self.cacheSize == item_size):
+            return self.cache
+        self.cache = self._sketch(item_size)
+        return self.cache
+    
+    def _sketch(self, item_size:Tuple[int, int]):
+        (x, y) = item_size
+        out   = [[self.fg if self.grid[i*3//x][j*3//y] else self.bg for j in range(y)] for i in range(x)]
+        style = [[self.fg_style if self.grid[i*3//x][j*3//y] else self.bg_style for j in range(y)] for i in range(x)]
 
-        out = [['.' if grid[i*3//x][j*3//y] else '#' for j in range(y)] for i in range(x)]
-
-        style = [[s.style for i in range(y)] for i in range(x)]
-        available_tiles = [(i, j) if not grid[i][j] and (i, j) not in s.used_tiles  else None for j in range(3) for i in range(3)] 
+        available_tiles = [(i, j) if not self.grid[i][j] and (i, j) not in self.used_tiles  else None for j in range(3) for i in range(3)] 
         while None in available_tiles:
             available_tiles.remove(None)
         shuffle(available_tiles)
         shuffle(available_tiles)
-        tile_queue = s.used_tiles + available_tiles
-        s.used_tiles=[]
+        tile_queue = self.used_tiles + available_tiles
+        self.used_tiles=[]
         # logger.info(available_tiles)
-        for it in s.field.items:
-            
+        for it in self.field.decorations:
             poz = tile_queue[0]
             tile_queue.remove(poz)
-            s.used_tiles += [poz]
+            self.used_tiles += [poz]
             tex = texture(it+".json")
-            def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))
-            (x0, y0) = (calc(x, poz[0]), calc(y, poz[1]))
-            (x1, y1) = (calc(x, poz[0]+1), calc(y, poz[1]+1))
-            # logger.debug("Properties : (%d, %d) (%d, %d) (%d, %d)", x, y, x0, y0, x1, y1)
-            tex.apply((x0, y0), (x1-x0, y1-y0), out, style)
+            (p0, s) = self.cords_to_pos(item_size, poz)
+            tex.apply(p0, s, out, style)
         return (out, style)
+
+class itemSquareForest(itemSquare):
+    def __init__(self, field):
+        super().__init__(field)
+        self.fg = ' '
+        self.bg = '.'
+        self.bg_style = 'green'
+        self.fg_style = 'default'
+        self.seed = self.field.num + int(bytes(self.field.player['currentField']).hex(), 16)
+    def sketch(s, item_size):
+        (out, style) = super().sketch(item_size)
+        return (out, style)
+        
+squareThemes = {
+    "default":itemSquare,
+    "forest":itemSquareForest
+}
+def current_itemSquare():
+    return squareThemes[cfg["theme"]]

@@ -40,6 +40,7 @@ class PlayerClass(Config):
             'currentLevel':'asriel_den.json'
         },
         readAll=True)
+        
     def set_value(self, name, value):
         self.config[name] = value
         
