@@ -1,5 +1,5 @@
 
-from src.common.config import Setting
+from src.common.config import Setting, registered_settings
 from src.level import Level, Field
 from src.graphics import tui_main as tui_main
 
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 from random import shuffle
 
 
-TRANSPARENT = "\0"
+TRANSPARENT = "\t"
 AIM_LABEL=['right', 'down', 'left', 'up']
 AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
@@ -38,6 +38,7 @@ cfg = Setting(
         }
     }
 )
+registered_settings += [cfg]
 
 class item:
     '''Item to be drawn on canvas'''
@@ -83,8 +84,8 @@ class texture(item):
             self.attrmap = data['attrmap']
             self.textures = data['textutes']
             #Debug to-delete
-            for t in self.textures:
-                logger.info( " Texture %s : '%s' => '%s'", filename, self.textures[t][0][0], bytes(self.textures[t][0][0], 'UTF-8'))
+            # for t in self.textures:
+                # logger.info( " Texture %s : '%s' => '%s'", filename, self.textures[t][0][0], bytes(self.textures[t][0][0], 'UTF-8'))
         except Exception as e:
             logger.error("Failed to load file: %s", e)
     def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[str]], List[List[str]]]:
@@ -186,16 +187,25 @@ class PlayerTexture(dynamicTexture):
         self.level = level
         super().__init__("player.json", size)
     def update(self, grid_size : Tuple[int, int], instant:bool=False):
-        (x, y) = grid_size
-        self.resize((x//self.level.height//3, y//self.level.width//3))
-        field = self.level.player['currentField']
-        (gx, gy) = self.level.get_cord(field)
-        (off_x, off_y) = (x * (gx+1/3) / self.level.height, y * (gy+1/3) / self.level.width)
-        # logger.info("Drawing player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
-        if(not instant):
-            self.move_anim((ceil(off_x), ceil(off_y)))
-        else:
-            self.move_instant((ceil(off_x), ceil(off_y)))
+        try:
+            (x, y) = grid_size
+            self.resize((x//self.level.height//3, y//self.level.width//3))
+            field = self.level.player['currentField']
+            (gx, gy) = self.level.get_cord(field)
+            (n, m) = (self.level.height, self.level.width)
+            x0 = x0 = x * gx// n
+            y0 = y * gy // m
+            x1 = x * (gx+1) // n
+            y1 = y * (gy+1) // m
+            
+            (off_x, off_y) = (x0 + (x1-x0+2)//3, y0 + (y1-y0+2)//3 )
+            # logger.info("Drawing player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
+            if(not instant):
+                self.move_anim((off_x, off_y))
+            else:
+                self.move_instant(((off_x), (off_y)))
+        except TypeError as e:
+            logger.error('Update dailed : %s, to field:%s ', e, self.level.player['currentField'])
 
 class itemSquare(item):
 

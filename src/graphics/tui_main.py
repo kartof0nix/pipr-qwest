@@ -32,29 +32,40 @@ palette = [("reversed", "standout", ""),
            ("hwhite", "white,bold", ""),
            ("hred", "dark red,bold", ""),
            ("hblue", "", "dark blue"),
-           ("hbrown", "", "brown")
+           ("hbrown", "black", "brown")
            ]
+class myOverlay(urwid.Overlay):
+    def keypress(self, size, key):
+        key = super().keypress(size, key)
+        if(key != None):
+            return self.bottom_w.keypress(size, key)
 
-
+class blockBoxAdapter(urwid.BoxAdapter):
+    def keypress(self, size, key):
+        key = super().keypress(size, key)
+        if(key != None and not key in ['up', 'down', 'left', 'right', 'i']):
+            return key
+    
 class MainView(urwid.WidgetPlaceholder):
-
+    
     def get_top(self):
         return self.main_placeholder.original_widget.top_w
 
     def pop_top(self):
         logger.debug("Popping top overlay. Current top : %s",
                      repr(self.main_placeholder.original_widget))
-        if (type(self.main_placeholder.original_widget) != urwid.Overlay):
+        if (type(self.main_placeholder.original_widget) != myOverlay):
             logger.error(
                 "Attempted to pop overlay whilst no overlay is active.")
             return
         self.main_placeholder.original_widget = self.main_placeholder.original_widget.bottom_w
         loop.draw_screen()
+    
     def push_top(self, widget: urwid.Widget, width: int, height: int, halign: Literal["left", "center", "right"], valign=Literal['top', 'middle', 'bottom']):
         placeholder = self.main_placeholder
         logger.debug("Pushing %s. Current top placeholder : %s",
                      repr(widget), repr(self.main_placeholder))
-        ov = urwid.Overlay(
+        ov = myOverlay(
             bottom_w=self.main_placeholder.original_widget,
             top_w=widget,
             align=halign,
@@ -73,7 +84,7 @@ class MainView(urwid.WidgetPlaceholder):
         if (side == "left"):
             pass
         if (side == "right"):
-            ov = urwid.Overlay(
+            ov = myOverlay(
                 placeholder.original_widget,
                 widget,
                 'right',
@@ -82,7 +93,7 @@ class MainView(urwid.WidgetPlaceholder):
                 right=2
             )
         if (side == "top"):
-            ov = urwid.Overlay(
+            ov = myOverlay(
                 placeholder.original_widget,
                 widget,
                 'top',
@@ -91,7 +102,7 @@ class MainView(urwid.WidgetPlaceholder):
                 top=2
             )
         if (side == "bottom"):
-            ov = urwid.Overlay(
+            ov = myOverlay(
                 placeholder.original_widget,
                 widget,
                 'bottom',
@@ -128,10 +139,14 @@ class MainView(urwid.WidgetPlaceholder):
         return True
 
 
-def add_frame(widget : urwid.Widget, width:int, height:int, side : Literal['left', 'top', 'right', 'bottom'], title=""):
+def add_frame(widget : urwid.Widget, width:int, height:int, side : Literal['left', 'top', 'right', 'bottom'], title="", block_move=False):
     halign = {'left':'left', 'top':'center', 'right':'right', 'bottom':'center'}[side]
     valign = {'left':'middle', 'top':'top', 'right':'middle', 'bottom':'bottom'}[side]
-    fixed_height_content = urwid.BoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+    if not block_move:
+        fixed_height_content = urwid.BoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+    else:
+        fixed_height_content = blockBoxAdapter(urwid.Filler(widget, valign="top"), height=height)
+        
     line_box_widget = urwid.Filler(urwid.LineBox(fixed_height_content, title))
     logger.info(line_box_widget.sizing())
     view.push_top(line_box_widget, width=width+2, height=height+2, halign=halign, valign=valign)

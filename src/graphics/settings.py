@@ -4,9 +4,10 @@ from typing import List, Any
 import urwid
 from collections.abc import Iterable
 from src.common.config import Setting, registered_settings
-from src.graphics.common import CustomButton
+from src.graphics.common import CustomButton, buttonAttr
 
-
+import logging
+logger = logging.getLogger(__name__)
     
 
 class SelectBox(urwid.Text):
@@ -110,8 +111,8 @@ class SettingsView(urwid.Pile):
                 self.body.append(SettingsItem(item, SelectBox(s.constrains[item]['selectable'], s.config[item])))
             if(s.constrains[item]['value_type'] == "bound"):
                 self.body.append(SettingsItem(item, ValueBox(s.constrains[item]['min_val'], s.constrains[item]['max_val'], s.config[item])))
-        apply_bt = urwid.AttrMap( urwid.Button("Apply", self.apply), "button", focus_map="reversed_button" )
-        exit_bt = urwid.AttrMap( urwid.Button("Close", self.exit), "button", focus_map="reversed_button" )
+        apply_bt= buttonAttr(urwid.Button("Apply", self.apply))
+        exit_bt = buttonAttr(urwid.Button("Close", self.exit))
         footer = [urwid.Divider(), urwid.Columns([("pack", apply_bt), ("pack", exit_bt)], dividechars=2)]
         # body.append(urwid.Button())
         return urwid.ListBox(urwid.SimpleFocusListWalker(header + self.body + footer))
@@ -124,9 +125,10 @@ class SettingsView(urwid.Pile):
 
 
 
+# logger.info("Ses: %s", registered_settings)
 
+# ses = 
 def render():
-    ses = SettingsView(registered_settings)
 
     main = urwid.Padding(ses, left=2, right=2)
 

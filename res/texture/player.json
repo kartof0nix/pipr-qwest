@@ -1,18 +1,19 @@
 {
     "attrmap":{
         "y":"pyellow",
-        "w":"pwhite"
+        "w":"pwhite",
+        " ":""
     },
     "textutes" : {
         "1x1": [[["ጰ"]], ["y"]],
         "3x3": [[
             " o ",
             "/|\\",
-            "/ \\"
+            "/\t\\"
         ],[
             "wyw",
             "www",
-            "www"
+            "w w"
         ]]
     }
 }

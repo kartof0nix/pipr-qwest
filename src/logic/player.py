@@ -37,6 +37,7 @@ class PlayerClass(Config):
             'health': 100,
             'armor': 0,
             'attack': 1,
+            'currentLevel':'asriel_den.json'
         },
         readAll=True)
     def set_value(self, name, value):

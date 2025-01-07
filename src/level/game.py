@@ -24,6 +24,7 @@ LEVEL_PATH = "res/levels/"
 
 class Field:
     def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", items:List=[]):
+        self.ev_task = None
         self.num = num
         self.neighbours = dict(neighbours)
         self.eventOnEnter = eventOnEnter
@@ -44,15 +45,15 @@ class Field:
 
     def enter(self):
         pushEvent("enter", {"src" : self.num})
-        asyncio.create_task(launchEvents(self.eventOnEnter))
+        self.ev_task = asyncio.create_task(launchEvents(self.eventOnEnter))
 
     def exit(self):
         pushEvent("exit", {"src" : self.num})
-        asyncio.create_task(launchEvents(self.eventOnLeave))
+        self.ev_task = asyncio.create_task(launchEvents(self.eventOnLeave))
     
     def inspect(self):
         pushEvent("inspect", {"src" : self.num})
-        asyncio.create_task(launchEvents(self.eventOnInspect))
+        self.ev_task = asyncio.create_task(launchEvents(self.eventOnInspect))
         
     def move(self, direction:str) -> bool:
         if( direction not in self.neighbours ): return False
@@ -61,7 +62,9 @@ class Field:
         pushEvent("move", {"src" : self.num, "dest":self.neighbours[direction]})
         return True
     
-        
+    def exit(self):
+        if self.ev_task != None:
+            self.ev_task.cancel()
 class Level:
     def __init__(self, player : PlayerClass, name : str, fieldsInit : Dict[int, Dict[str, str]], startField : int, graph : List[Tuple], grid : List[List[int]]= None):
         self.queue = asyncio.Queue()
@@ -102,7 +105,8 @@ class Level:
         
         self.fieldDict[self.player['currentField']].enter()
         return True
-        
+    def start(self):
+        self.fieldDict[self.player['currentField']].enter()
 
     def inspect(self):
         return self.fieldDict[self.player['currentField']].inspect()
@@ -112,9 +116,13 @@ class Level:
             for j in range(self.width):
                 if(self.grid[i][j] == fieldId): return (i, j)
         return None
-
+    def exit(self):
+        for f in self.fieldDict:
+            self.fieldDict[f].exit()
 class levelConfig(Config):
     CONFIG_PATH=Path(LEVEL_PATH).expanduser()
+    def save_to_file(self):
+        pass #Don't overrite the file contents
 
 """Load level from file"""
 def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> Level:
@@ -141,6 +149,7 @@ def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> L
                 )
         for ev in s['events']:
             eventFromDict(type=ev['eventType'], eventId=ev['eventId'], player=player, config=ev['params'])
+        lvl.start()
         return lvl
     except Exception as e:
         logger.error("Loading level %s failed: %s", filename, e)

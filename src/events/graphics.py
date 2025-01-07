@@ -1,8 +1,8 @@
 
-from src.events.game import GameEvent, ConversationEvent
+from src.events.game import GameEvent, ConversationEvent, DamageEvent
 from src.graphics import tui_main
 from src.graphics.common import CustomButton
-
+from src.graphics.common import buttonAttr
 import urwid
 import asyncio
 from typing import List, Tuple
@@ -33,7 +33,37 @@ class GameEventTUI(metaclass=RegisterEventTUIMeta):
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
+class notifyEventTUI(GameEventTUI):
+    def makeWidget(self):
+        self.y = len(self.text)+5
+        self.x=2
+        return urwid.Pile([(urwid.Text(('cyan', self.text))), urwid.Filler(buttonAttr(urwid.Button("Ok", self.keypress )))])
+    def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:    #         logger.info("UwuSync Sleeping")
+        if(key in [" ", "enter"]):
+            self.event.complete.set()
+            return None
+        return key
 
+    def __enter__(self):
+        logger.info("Entering TUI!")
+        self.widget=self.makeWidget()
+        self.widget.keypress = self.keypress
+        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Notification', True)
+        pass
+    def __exit__(self, exc_type, exc_value, traceback):
+        logger.info("Exitting TUI!")
+        tui_main.rem_frame()
+        pass
+
+class DamageEventTUI(notifyEventTUI):
+    def __init__(self, event : DamageEvent):
+        super().__init__(event)
+        self.text = f"You have been dealt {self.event.hp} damage!"
+
+class changeLevelEventTUI(notifyEventTUI):
+    def __init__(self, event : DamageEvent):
+        super().__init__(event)
+        self.text = f"You have found a passage to {self.event.nextLevel}"
 # class DamageEvent(GameEvent):
 #     localConfig = {
 #         'health': 0,
@@ -48,7 +78,6 @@ class GameEventTUI(metaclass=RegisterEventTUIMeta):
 #         return super().__call__()
 
 class menuEventTUI(GameEventTUI):
-
     def itemChosen(self, button: urwid.Button):
         self.event.select(self.event.entryList.index(button.label))
 
@@ -56,18 +85,19 @@ class menuEventTUI(GameEventTUI):
         pile = [urwid.Text(('magenta', 'Choose action'))]
         self.y = len('Choose action')
         for it in self.event.entryList:
-            pile.append(urwid.Button(it, self.itemChosen))
+            pile.append(buttonAttr(urwid.Button(it, self.itemChosen)))
             self.y = max(self.y, len(it))
 
         self.x = len(pile)
-        return urwid.Pile(pile)
+        w = urwid.Pile(pile)
+        return w
 
     def __enter__(self):
         logger.info("Entering TUI!")
         self.widget=urwid.WidgetPlaceholder(self.makeWidget())
 
         # self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, self.y+10, self.x, 'bottom', 'Choice')
+        tui_main.add_frame(self.widget, self.y+10, self.x, 'bottom', 'Choice', True)
         pass
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")
@@ -102,20 +132,23 @@ class ConversationEventTUI(GameEventTUI):
         for it in self.event.dialogue:
             self.y = max(self.y, len(it[0]), len(it[1]))
         self.x=3
-        return urwid.Pile([urwid.Text(('magenta', character+":")), (urwid.Text(('cyan', text))), urwid.Filler(urwid.Button("Next", self.keypress ))])
+        return urwid.Pile([urwid.Text(('magenta', character+":")), (urwid.Text(('cyan', text))), urwid.Filler(buttonAttr(urwid.Button("Next", self.keypress )))])
     def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:    #         logger.info("UwuSync Sleeping")
-        logger.info("kerypees")
-        self.event.nextLine()
-        if not(self.event.complete.is_set()):
-            self.widget.original_widget = self.makeWidget()
-            tui_main.loop.draw_screen()
+        if(key in [" ", "enter"]):
+            self.event.nextLine()
+            if not(self.event.complete.is_set()):
+                self.widget.original_widget = self.makeWidget()
+                tui_main.loop.draw_screen()
+            return None
+        if(key in ['up', 'down', 'left', 'right']): return None
+        return key
     def __enter__(self):
         logger.info("Entering TUI!")
         (character, text) = self.event.currentLine()
         # tui_main.aloop.create_task(self.tui_loop())
         self.widget=urwid.WidgetPlaceholder(self.makeWidget())
         self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Conversation')
+        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Conversation', True)
         pass
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")

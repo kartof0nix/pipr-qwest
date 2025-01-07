@@ -24,7 +24,7 @@ def unregisterHandler(event:str, func):
 async def loop():
     while(True):
         (ev, par) = await q.get()
-        logger.info("Event %s", ev)
+        logger.info("Event %s, %s", ev, par)
         if(ev in registered):
             for f in registered[ev]:
                 tui_main.aloop.create_task(f(par))

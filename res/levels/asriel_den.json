@@ -15,46 +15,17 @@
         "3": {},
         "4": {},
         "5": {},
-        "6": {}
+        "6": {},
+        "7": {
+            "eventOnInspect": "level_asriel_passage",
+            "items" : ["door"]
+        }
     },
     "startField": 1,
-    "graph": [
-        [
-            1,
-            2
-        ],
-        [
-            2,
-            3
-        ],
-        [
-            3,
-            4
-        ],
-        [
-            4,
-            5
-        ],
-        [
-            3,
-            6
-        ]
-    ],
-    "grid": [
-        [
-            0,
-            1,
-            2,
-            3,
-            4
-        ],
-        [
-            0,
-            0,
-            0,
-            6,
-            5
-        ]
+    "graph": [ [ 1, 2 ], [ 2, 3 ], [ 3, 4 ], [ 4, 5 ], [ 5, 6 ], [ 6, 7 ], [ 4, 7 ] ], 
+    "grid": [ 
+        [ 1, 2, 3, 4, 5 ], 
+        [ 0, 0, 0, 7, 6 ] 
     ],
     "events": [
         {
@@ -79,6 +50,21 @@
             }
         },
         {
+            "eventType": "changeLevelEvent",
+            "eventId": "level_asriel_passage",
+            "params": {
+                "nextLevel": "asriel_passage.json",
+                "nextField": 1
+            }
+        },
+        {
+            "eventType": "DamageEvent",
+            "eventId": "goblinFight",
+            "params": {
+                "hp": 11
+            }
+        },
+        {
             "eventType": "menuEvent",
             "eventId": "goblinChoice",
             "params": {
@@ -87,7 +73,7 @@
                     "Run"
                 ],
                 "eventList": [
-                    "",
+                    "goblinFight",
                     ""
                 ]
             }

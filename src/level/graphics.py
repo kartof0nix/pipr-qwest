@@ -4,6 +4,7 @@ from src.logic.player import PlayerClass
 from src.level.textures import dynamicTexture, itemSquare, PlayerTexture
 from src.common.event_queue import registerHandler, unregisterHandler
 from src.level.controls import Control
+from src.level.overlay import overlayWidget
 # from urwid import Sizing, Widget, BigText, TextCanvas
 
 import json
@@ -42,15 +43,15 @@ class fabric(urwid.Widget):
             attr.append([])
             char.append(b'')
             for j in range(len(style[0])):
-                if(j == 0 or grid[i][j][0] == ' ' or str_util.get_char_width(grid[i][j-1]) <= 1):
+                if(j == 0 or str_util.get_char_width(grid[i][j-1]) <= 1):
                     # If previous char took two spaces, skip this one
                     char[i] += bytes(grid[i][j][0], 'UTF-8') 
                     if(j != 0 and attr[i][-1][0] == style[i][j]):
                         attr[i][-1] = (style[i][j], attr[i][-1][1] + len(bytes(grid[i][j][0], 'UTF-8')))
                     else:
                         attr[i].append((style[i][j], len(bytes(grid[i][j][0], 'UTF-8'))))
-                else:
-                    logger.info("Skipped '%s'", grid[i][j])
+                # else:
+                    # logger.info("Skipped '%s'", grid[i][j])
             #Urwid be stupid, I Don't f***ing care, let's get it over with and fix it manually
             while(str_util.calc_width(char[i], 0, len(char[i])) > y):
                 char[i] = char[i][0:-1]
@@ -113,26 +114,28 @@ class fabricGrid(fabric):
     def keypress(self, size, key):
         if(self.complete() ):
             return self.handlekey(key)
-
+    def stopTasks(self):
+        self.playerTexture.cancel_anim()
 class LevelView:
-    async def loop(self):
+    def __init__(self, level : Level):
+        self.level = level
+    def __enter__(self):
         try:
-            v=fabricGrid()
+            self.fabric=fabricGrid()
             self.controlModule = Control(self.level)
-            v.init(self.level, self.controlModule.handleKey)
-            tui_main.view.bottom = v
+            self.fabric.init(self.level, self.controlModule.handleKey)
+            self.last_bottom = tui_main.view.bottom
+            tui_main.view.bottom = self.fabric
+            overlay = overlayWidget(self.level.player)
+            tui_main.add_frame(overlay, overlay.getSize()[1], overlay.getSize()[0], 'left')
             tui_main.loop.draw_screen()
-            registerHandler("move", v.update)
+            registerHandler("move", self.fabric.update)
         except Exception as e:
             logger.error(e)
             logger.debug(traceback.format_exc())
 
-        while True:
-            await asyncio.sleep(1)
-    def __init__(self, level : Level):
-        self.level = level
-        self.task = tui_main.aloop.create_task(self.loop())
-    def __del__(self):
-        self.task.cancel()
-        del self.task
+    def __exit__(self, exception_type, exception_value, exception_traceback):
+        self.fabric.stopTasks()
+        tui_main.view.bottom = self.last_bottom
+        tui_main.rem_frame()
         

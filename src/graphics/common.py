@@ -24,3 +24,9 @@ class CustomButton(urwid.Button):
     def set_label(self, label):
         """Set the button's label."""
         self._label_widget.set_text(label)
+
+def buttonAttr(button:urwid.Button):
+    return urwid.AttrMap( button, "button", focus_map="reversed_button" )
+
+def niceFiller(widget : urwid.Widget):
+    return urwid.AttrMap(urwid.Filler(urwid.Padding(urwid.AttrMap(widget, "bg"), align='center', width=('relative', 90) )), "outside")

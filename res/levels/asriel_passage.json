@@ -1,0 +1,42 @@
+{
+    "name": "asriel_passage",
+    "fields": {
+        "1": {
+            "eventOnInspect":"level_asriel_den",
+            "items":["door"]
+        },
+        "2": {},
+        "3": {},
+        "4": {},
+        "5": {},
+        "6": {},
+        "7": {
+            "eventOnInspect":"level_asriel_big",
+            "items":["door"]
+        }
+    },
+    "startField": 1,
+    "graph": [ [1, 2], [ 2, 3 ], [ 3, 4 ], [ 4, 5 ], [ 5, 6 ], [ 6, 7 ] ],
+    "grid": [
+        [ 0, 1, 2, 3, 4 ],
+        [ 0, 0, 7, 6, 5 ]
+    ],
+    "events": [
+        {
+            "eventType": "changeLevelEvent",
+            "eventId": "level_asriel_den",
+            "params": {
+                "nextLevel": "asriel_den.json",
+                "nextField": 7
+            }
+        },
+        {
+            "eventType": "changeLevelEvent",
+            "eventId": "level_asriel_big",
+            "params": {
+                "nextLevel": "asriel_big.json",
+                "nextField": 1
+            }
+        }
+    ]
+}
