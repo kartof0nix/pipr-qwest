@@ -2,7 +2,10 @@
     "name": "asriel_den.json",
     "fields": {
         "1": {
-            "eventOnEnter": "goblinThreat"
+            "eventOnEnter": "goblinThreat",
+            "items": [
+                "goblins"
+            ]
         },
         "2": {
             "items": [
