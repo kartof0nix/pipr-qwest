@@ -71,18 +71,35 @@ class SelectSaveView(urwid.Pile):
 class MainView(urwid.Pile):
     async def launchSelect(self):
         res = None
+        lastBottom = tui_main.view.bottom
         while(res == None):
             sel = SelectSaveView()
             tui_main.view.bottom = niceFiller(sel)
             res = await sel.choice()
+        tui_main.view.bottom = lastBottom
         asyncio.create_task(main.startGame(res))
     
+    async def launchSettings(self):
+        lastBottom = tui_main.view.bottom
+        settings = SettingsView(registered_settings)
+        tui_main.view.bottom = niceFiller(settings)
+        await settings.exitted.wait()
+        tui_main.view.bottom = lastBottom
+                
     def playButton(self, butt : urwid.Button):
         asyncio.create_task(self.launchSelect())
-    
+    def exitButton(self, butt : urwid.Button):
+        raise urwid.ExitMainLoop()
+    def settingsButton(self, butt : urwid.Button):
+        asyncio.create_task(self.launchSettings())
+        
     def __init__(self):
         menu = urwid.Pile([
-            buttonAttr(urwid.Button("Play!", self.playButton ))
+            buttonAttr(urwid.Button("Play!", self.playButton )),
+            buttonAttr(urwid.Button("Settings", self.settingsButton )),
+            urwid.Divider(top=4),
+            buttonAttr(urwid.Button("Exit", self.exitButton )),
+            
         ])
         widgets = [
             urwid.Padding(urwid.BigText(('banner', "Pipr Qwest"), urwid.HalfBlock5x4Font()),width='clip', align='center'),
@@ -115,7 +132,7 @@ class Main:
         
     async def startGame(self, save:str):
         logger.info(f"Starting game %s", registered_settings)
-        tui_main.view.bottom = SettingsView(registered_settings)
+        # tui_main.view.bottom = SettingsView(registered_settings)
         self.player = PlayerClass(save + ".json")
         lvl = LevelManager.callLevel(self.player['currentLevel'], player=self.player)
 

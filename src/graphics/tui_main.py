@@ -19,11 +19,15 @@ Later in episode 4, she seems to have adapted more to being in the circus. She s
 palette = [("reversed", "standout", ""),
            ("button", "light cyan", ""),
            ("reversed_button", "black", "light cyan"),
+           ("button2", "yellow", ""),
+           ("reversed_button2", "black", "dark red"),
            ("banner", "", "", "", "#ffa", "#60d"),
+           ("bold", "white,bold", ""),
+           ("italics", "white,italics", ""),
            ("streak", "", "", "", "g50", "#60a"),
            ("inside", "", "", "", "g38", "#808"),
-           ("outside", "", "", "", "g27", "#a06"),
-           ("bg", "", "", "", "g7", "#d06"),
+           ("outside", "", "dark gray", "", "g27", "#333"),
+           ("bg", "", "", "", "g7", "#033"),
            ("cyan", "dark cyan", ""),
            ("magenta","dark magenta", ""),
            ("default", "", ""),
@@ -130,8 +134,8 @@ class MainView(urwid.WidgetPlaceholder):
 
         # Run the application with the placeholder
     def keypress(self, size, key):
-        if key in ("q", "Q"):
-            aloop.create_task(self.exit())
+        # if key in ("q", "Q"):
+        #     aloop.create_task(self.exit())
         super().keypress(size, key)
     def stop(self):
         raise urwid.ExitMainLoop()
@@ -179,7 +183,7 @@ def render(callback, exitFunction):
 
     loop = urwid.MainLoop(view, palette=palette, event_loop=ev_loop)
     view.exit = exitFunction
-    loop.screen.set_terminal_properties(colors=256)
+    loop.screen.set_terminal_properties(colors=2**24)
     # self.draw_main()
     aloop.create_task(callback())
     loop.run()

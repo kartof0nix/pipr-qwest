@@ -1,4 +1,5 @@
 import urwid
+import urwid.text_layout
 
 class CustomButton(urwid.Button):
     def __init__(self, label, on_press=None, user_data=None, prefix='', suffix=''):
@@ -27,6 +28,8 @@ class CustomButton(urwid.Button):
 
 def buttonAttr(button:urwid.Button):
     return urwid.AttrMap( button, "button", focus_map="reversed_button" )
+def buttonAttr2(button:urwid.Button):
+    return urwid.AttrMap( button, "button2", focus_map="reversed_button2" )
 
 def niceFiller(widget : urwid.Widget):
     return urwid.AttrMap(urwid.Filler(urwid.Padding(urwid.AttrMap(widget, "bg"), align='center', width=('relative', 90) )), "outside")

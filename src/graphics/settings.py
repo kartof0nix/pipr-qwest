@@ -1,5 +1,6 @@
 
 from __future__ import annotations
+import asyncio
 from typing import List, Any
 import urwid
 from collections.abc import Iterable
@@ -101,7 +102,7 @@ class SettingsView(urwid.Pile):
             self.pages[self.current].set_value(it.item, it.right.get_value())
         self.pages[self.current].save_to_file()
     def exit(self, button : urwid.Button):
-        raise urwid.ExitMainLoop()
+        self.exitted.set()
     
     def subpage(self, s : Setting):
         header = [urwid.Text(s.name), urwid.Divider()]
@@ -115,10 +116,11 @@ class SettingsView(urwid.Pile):
         exit_bt = buttonAttr(urwid.Button("Close", self.exit))
         footer = [urwid.Divider(), urwid.Columns([("pack", apply_bt), ("pack", exit_bt)], dividechars=2)]
         # body.append(urwid.Button())
-        return urwid.ListBox(urwid.SimpleFocusListWalker(header + self.body + footer))
+        return urwid.Pile(urwid.SimpleFocusListWalker(header + self.body + footer))
     def __init__(self, settings : List[Setting]):
         self.pages = settings
         self.current = 0
+        self.exitted = asyncio.Event()
         super().__init__([self.subpage(self.pages[self.current])])
     # def __init__(self, widget_list, focus_item = None):
         # super().__init__(widget_list, focus_item)
