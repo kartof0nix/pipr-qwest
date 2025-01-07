@@ -8,6 +8,7 @@ from src.level.controls import Control
 
 import json
 import urwid
+from urwid import str_util
 import asyncio
 import traceback
 from typing import Dict, Iterator, List, Literal, Tuple
@@ -31,11 +32,32 @@ class fabric(urwid.Widget):
         # logger.info("Start render %s", size)
         '''Render thy contents and return the result'''
         (y, x) = size # Urwid stores the coordinates swapped, so swap them back on integration
-        (char, style) = self._render((x, y))
+        (grid, style) = self._render((x, y))
         # for dt in self.dynamic_textures:
-        #     dt.apply_anim(char, style)
-        attr = [[(style[i][j], len(bytes(char[i][j], 'UTF-8'))) for j in range(len(style[0]))] for i in range(len(style))]
-        char = [bytes(''.join(i), 'UTF-8') for i in char]
+        attr = []
+        char = []
+        assert(len(style)) == x
+        assert(len(style[0])) == y
+        for i in range(len(style)):
+            attr.append([])
+            char.append(b'')
+            for j in range(len(style[0])):
+                if(j == 0 or grid[i][j][0] == ' ' or str_util.get_char_width(grid[i][j-1]) <= 1):
+                    # If previous char took two spaces, skip this one
+                    char[i] += bytes(grid[i][j][0], 'UTF-8') 
+                    if(j != 0 and attr[i][-1][0] == style[i][j]):
+                        attr[i][-1] = (style[i][j], attr[i][-1][1] + len(bytes(grid[i][j][0], 'UTF-8')))
+                    else:
+                        attr[i].append((style[i][j], len(bytes(grid[i][j][0], 'UTF-8'))))
+                else:
+                    logger.info("Skipped '%s'", grid[i][j])
+            #Urwid be stupid, I Don't f***ing care, let's get it over with and fix it manually
+            while(str_util.calc_width(char[i], 0, len(char[i])) > y):
+                char[i] = char[i][0:-1]
+                attr[i][-1] = (attr[i][-1][0], attr[i][-1][1]-1)
+
+            # if(i==1): logger.info(char[i])
+            # if(i==1): logger.info(char[i].decode('UTF-8'))
         # result = [''.join([style[i][j] + char[i][j] for j in range(y)]) for i in range(x)]
         self._invalidate()
         return urwid.TextCanvas(char, attr=attr)

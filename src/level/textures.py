@@ -8,6 +8,7 @@ from time import time
 from pathlib import Path
 from typing import Dict, Iterator, List, Literal, Tuple
 
+from math import ceil
 import json
 import urwid
 import asyncio
@@ -19,7 +20,7 @@ logger = logging.getLogger(__name__)
 from random import shuffle
 
 
-TRANSPARENT = None
+TRANSPARENT = "\0"
 AIM_LABEL=['right', 'down', 'left', 'up']
 AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
@@ -53,11 +54,11 @@ class item:
     def sketch(s, item_size:Tuple[int, int]) -> Tuple[List[List[chr]], List[List[chr]]]:
         (x, y) = item_size
         '''Sketch the item with size (x, y)'''
-        grid = [[None for i in range(y)] for j in range(x)]
+        grid = [[TRANSPARENT for i in range(y)] for j in range(x)]
         style = [[s.style for i in range(y)] for j in range(x)]
         return (grid, style)
     
-    def apply(s, offset : Tuple[int, int], item_size : Tuple[int, int], char, style):
+    def apply(s, offset : Tuple[int, int], item_size : Tuple[int, int], char: List[List[str]], style : List[List[str]]):
         (x, y) = item_size
         (off_x, off_y) = offset
         '''Apply the rendered item on canvas (char, style) with offset'''
@@ -81,9 +82,12 @@ class texture(item):
                 data = json.load(f)
             self.attrmap = data['attrmap']
             self.textures = data['textutes']
+            #Debug to-delete
+            for t in self.textures:
+                logger.info( " Texture %s : '%s' => '%s'", filename, self.textures[t][0][0], bytes(self.textures[t][0][0], 'UTF-8'))
         except Exception as e:
             logger.error("Failed to load file: %s", e)
-    def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[chr]], List[List[chr]]]:
+    def sketch(self, item_size:Tuple[int, int]) -> Tuple[List[List[str]], List[List[str]]]:
         (x, y) = item_size
         (grid, style) = super().sketch(item_size)
         # Find the texture approieate for thy size
@@ -189,9 +193,9 @@ class PlayerTexture(dynamicTexture):
         (off_x, off_y) = (x * (gx+1/3) / self.level.height, y * (gy+1/3) / self.level.width)
         # logger.info("Drawing player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
         if(not instant):
-            self.move_anim((int(off_x), int(off_y)))
+            self.move_anim((ceil(off_x), ceil(off_y)))
         else:
-            self.move_instant((int(off_x), int(off_y)))
+            self.move_instant((ceil(off_x), ceil(off_y)))
 
 class itemSquare(item):
 
