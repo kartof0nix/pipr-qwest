@@ -1,28 +1,37 @@
-# from common.config import Setting, registered_settings
+'''
+Call the package directly to run it.
+'''
 
-#Setup logging before importing any further files
-
-import datetime
 import logging
-with open("qwest.log", "r") as old:
-    arch = open("qwest_old.log", "a")
-    arch.write(old.read())
-    arch.close()
 logger = logging.getLogger(__name__)
-logging.basicConfig(filename='qwest.log', level=logging.INFO, filemode="w")
-logger.info('Started logger at %s' % datetime.datetime.now() )
+logging.basicConfig(filename='qwest.log',
+                        level=logging.INFO, filemode="w")
 
-import test
-# from src.graphics.settings import render
-from src.level import pap
-# def main():
-#     render()
-def main():
-    pap()
+import urwid
+import asyncio
+from src.graphics import tui_main
+from src.level import LevelManager
+from src.logic.player import PlayerClass
+from src.common.event_queue import loop
 
-if __name__ == '__main__':
-    main()
+# a = fabricCanvas([["a", "b"], ["c", "d"]], [["", ""], ["", ""]])
+# for c in a.content():
+#     print(c)
+# print(a.content())
+class Main:
+    async def exit(self):
+        self.player.save_to_file()
+        tui_main.view.stop()
+    async def start(self):
+        logger.info(f"Starting game")
+        self.player = PlayerClass("player.json")
+        lvl = LevelManager.callLevel("asriel_den.json", player=self.player)
+        tui_main.aloop.create_task(loop())
+        await asyncio.sleep(10)
+        LevelManager.delLevel()
+        # del lvl
+# a = input("Select level")
+main = Main()
 
-# test()
-
+tui_main.render(main.start, main.exit)
 

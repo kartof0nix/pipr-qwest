@@ -30,14 +30,15 @@ item_lib = {i.itemId : i for i in [
 
 """Define a universal player (save) class since multiple saves are possible"""
 class PlayerClass(Config):
-    CONFIG_PATH=Path("~/.pipr-qwest/config").expanduser()
+    CONFIG_PATH=Path("~/.pipr-qwest/saves").expanduser()
     def __init__(self, filename):
         super().__init__(filename,
         {
             'health': 100,
             'armor': 0,
-            'attack': 1
-        })
+            'attack': 1,
+        },
+        readAll=True)
     def set_value(self, name, value):
         self.config[name] = value
         

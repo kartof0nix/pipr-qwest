@@ -25,7 +25,8 @@ A config class should be generated once for a module - with init specifing what 
 class Config:
     CONFIG_PATH=Path("~/.pipr-qwest/config").expanduser()
 
-    def __init__(self, filename, defaultValues : Dict[str, Any] = {}):
+    def __init__(self, filename, defaultValues : Dict[str, Any] = {}, readAll=False):
+        self.readAll = readAll
         self.name = filename 
         if(not self.CONFIG_PATH.is_dir()): 
             self.CONFIG_PATH.mkdir()
@@ -34,13 +35,14 @@ class Config:
         self.fpath = self.CONFIG_PATH.joinpath( filename)
         self.config = dict(defaultValues)
         self.load_from_file()
+        logger.info("Config %s : %s", filename, self.config)
         self.save_to_file() # If any values have been fixed, import
 
     def reset(self):
         self.config = self.defaultValues
         
     def set_value(self, name: str, value: Any):
-        if name not in self.config:
+        if not self.readAll and  name not in self.config:
             raise KeyError(f"Config item '{name}' not found.")
         self.config[name] = value
 

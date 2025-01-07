@@ -54,15 +54,20 @@ class menuEventTUI(GameEventTUI):
 
     def makeWidget(self):
         pile = [urwid.Text(('magenta', 'Choose action'))]
+        self.y = len('Choose action')
         for it in self.event.entryList:
             pile.append(urwid.Button(it, self.itemChosen))
+            self.y = max(self.y, len(it))
+
+        self.x = len(pile)
         return urwid.Pile(pile)
 
     def __enter__(self):
         logger.info("Entering TUI!")
         self.widget=urwid.WidgetPlaceholder(self.makeWidget())
+
         # self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, 100, 10, 'bottom', 'Choice')
+        tui_main.add_frame(self.widget, self.y+10, self.x, 'bottom', 'Choice')
         pass
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")
@@ -93,7 +98,11 @@ class ConversationEventTUI(GameEventTUI):
 
     def makeWidget(self):
         (character, text) = self.event.currentLine()
-        return urwid.Pile([urwid.Text(('magenta', character)), (urwid.Text(('cyan', text))), urwid.Filler(urwid.Button("Next", self.keypress ))])
+        self.y = 0
+        for it in self.event.dialogue:
+            self.y = max(self.y, len(it[0]), len(it[1]))
+        self.x=3
+        return urwid.Pile([urwid.Text(('magenta', character+":")), (urwid.Text(('cyan', text))), urwid.Filler(urwid.Button("Next", self.keypress ))])
     def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:    #         logger.info("UwuSync Sleeping")
         logger.info("kerypees")
         self.event.nextLine()
@@ -106,7 +115,7 @@ class ConversationEventTUI(GameEventTUI):
         # tui_main.aloop.create_task(self.tui_loop())
         self.widget=urwid.WidgetPlaceholder(self.makeWidget())
         self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, 100, 10, 'bottom', 'Conversation')
+        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Conversation')
         pass
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")

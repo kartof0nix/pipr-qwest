@@ -120,9 +120,10 @@ class MainView(urwid.WidgetPlaceholder):
         # Run the application with the placeholder
     def keypress(self, size, key):
         if key in ("q", "Q"):
-            raise urwid.ExitMainLoop()
+            aloop.create_task(self.exit())
         super().keypress(size, key)
-
+    def stop(self):
+        raise urwid.ExitMainLoop()
     def selectable(self):
         return True
 
@@ -146,7 +147,7 @@ def rem_frame():
 
 view = MainView()
 '''Urwid main loop. Use to re-draw screen after update'''
-def render(callback):
+def render(callback, exitFunction):
     '''
     Render the main view. Since urwid needs to manage asyncio, use callback asyc function to continue execution of main program.
     '''
@@ -162,6 +163,7 @@ def render(callback):
     ev_loop = urwid.AsyncioEventLoop(loop=aloop)
 
     loop = urwid.MainLoop(view, palette=palette, event_loop=ev_loop)
+    view.exit = exitFunction
     loop.screen.set_terminal_properties(colors=256)
     # self.draw_main()
     aloop.create_task(callback())
