@@ -3,12 +3,12 @@
     "fields": {
         "1": {
             "eventOnEnter": "goblinThreat",
-            "items": [
+            "decorations": [
                 "goblins"
             ]
         },
         "2": {
-            "items": [
+            "decorations": [
                 "house"
             ]
         },
@@ -18,7 +18,7 @@
         "6": {},
         "7": {
             "eventOnInspect": "level_asriel_passage",
-            "items" : ["door"]
+            "decorations" : ["door"]
         }
     },
     "startField": 1,

@@ -3,7 +3,7 @@
     "fields": {
         "1": {
             "eventOnInspect":"level_asriel_den",
-            "items":["door"]
+            "decorations":["door"]
         },
         "2": {},
         "3": {},
@@ -12,10 +12,9 @@
         "6": {},
         "7": {
             "eventOnInspect":"level_asriel_big",
-            "items":["door"]
+            "decorations":["door"]
         }
     },
-    "startField": 1,
     "graph": [ [1, 2], [ 2, 3 ], [ 3, 4 ], [ 4, 5 ], [ 5, 6 ], [ 6, 7 ] ],
     "grid": [
         [ 0, 1, 2, 3, 4 ],
