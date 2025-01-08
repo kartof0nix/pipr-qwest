@@ -2,7 +2,7 @@
 from src.common.config import Setting, registered_settings
 from src.level import Level, Field
 from src.graphics import tui_main as tui_main
-from src.logic import player
+from src.globals import player
 
 from time import time
 from pathlib import Path
@@ -249,6 +249,9 @@ class itemSquare(item):
             self.grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = self.paths[i]
         if(not True in self.paths): self.grid[1][1]=False
         self.cacheSize=None
+        urwid.CanvasCache.clear()
+        tui_main.loop.draw_screen()
+        
     def cords_to_pos(self, item_size:Tuple[int, int], cord:Tuple[int, int]) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         (x, y) = item_size
         def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))

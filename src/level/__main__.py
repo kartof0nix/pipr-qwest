@@ -10,7 +10,7 @@ logging.basicConfig(filename='qwest.log',
 import asyncio
 from src.graphics import tui_main
 from src.level import LevelManager
-from src.logic import player
+from src.globals import player
 from src.common.event_queue import loop
 
 # a = fabricCanvas([["a", "b"], ["c", "d"]], [["", ""], ["", ""]])

@@ -2,7 +2,7 @@ from src.graphics import tui_main
 from src.graphics.common import notify
 from src.graphics.pauseMenu import PauseMenu
 from src.level import Level, Field
-from src.logic import player
+from src.globals import player
 from src.level.textures import dynamicTexture, current_itemSquare, PlayerTexture
 from src.common.event_queue import registerHandler, unregisterHandler
 from src.level.controls import Control

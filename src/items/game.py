@@ -1,5 +1,5 @@
-from src.logic.template import ev_template, boolEval
-from src.logic import player
+from src.globals.template import ev_template, boolEval
+from src.globals import player
 from src.common.event_queue import pushEvent
 
 # from src.level import LevelManager

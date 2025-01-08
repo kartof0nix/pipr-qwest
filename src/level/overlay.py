@@ -1,5 +1,5 @@
 import urwid
-from src.logic import player
+from src.globals import player
 from src.common import event_queue
 
 class overlayWidget(urwid.Pile):

@@ -1,6 +1,6 @@
-from src.logic.template import ev_template, boolEval
+from src.globals.template import ev_template, boolEval, setValue
 from src.common.event_queue import pushEvent
-from src.logic import player
+from src.globals import player
 # from src.level import LevelManager
 import asyncio
 from typing import List, Tuple
@@ -49,7 +49,7 @@ class GameEvent(metaclass=RegisterEventMeta):
         pushEvent("event_end", {"event":self})
         # logger.info("Len: %s, %d", self.eventId,  len(self.assignValues))
         for (key, template) in self.assignValues:
-            player.player[key] = type(player.player[key])(ev_template(template))
+            setValue(key, ev_template(template))
         return self.nextEvent
 
 
@@ -83,7 +83,7 @@ class DamageEvent(GameEvent):
     def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
         if('assignValues' not in config): config['assignValues'] = []
-        config['assignValues'] += [('health', "{{ player.player['health']- %s}}" % (config['hp']))]
+        config['assignValues'] += [('player.health', "{{ player['health']- %s}}" % (config['hp']))]
         super().__init__(eventId, config,  True)
 
     async def __call__(self):

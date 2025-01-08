@@ -9,7 +9,7 @@ from src.common.config import Setting, registered_settings
 from src.graphics import tui_main
 from src.graphics.settings import launchSettings
 from src.graphics.common import CustomButton, buttonAttr, notify
-from src.logic import player
+from src.globals import player
 from src.common import event_queue
 import logging
 logger = logging.getLogger(__name__)

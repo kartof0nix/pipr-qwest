@@ -13,7 +13,7 @@ import urwid
 import asyncio
 from src.graphics import tui_main
 from src.level import LevelManager
-from src.logic import player
+from src.globals import player
 from src.common import event_queue
 from src.graphics.settings import launchSettings
 from src.graphics.common import buttonAttr, buttonAttr2, niceFiller

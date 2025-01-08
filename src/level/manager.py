@@ -5,7 +5,7 @@ from src.level.game import Field, Level, loadLevel, LEVEL_PATH
 from src.level.graphics import LevelView
 from src.common import event_queue
 from src.events.game import changeLevelEvent
-from src.logic import player
+from src.globals import player
 
 import asyncio
 import logging
@@ -40,12 +40,11 @@ class LevelManagerClass:
         
     
     async def _changeLevel(self, nextLevel : str, nextField:int = None):
-        player = self.lvl.player
-        player['currentLevel'] = nextLevel
+        player.player['currentLevel'] = nextLevel
         self.delLevel()
         while self.exitEvent.is_set():
             await asyncio.sleep(0.1)
-        await self._callLevel(nextLevel, player=player, startField=nextField)
+        await self._callLevel(nextLevel, startField=nextField)
     def changeLevel(self, nextLevel : str, nextField:int = None):
         asyncio.create_task(self._changeLevel(nextLevel=nextLevel, nextField=nextField))
 

@@ -1,5 +1,5 @@
-from src.logic import player
-from src.logic.template import ev_template
+from src.globals import player, fields
+from src.globals.template import ev_template
 from src.events import eventFromDict, launchEvents, registeredEvents
 from src.common.event_queue import pushEvent
 import json
@@ -23,7 +23,7 @@ DIRECTIONS = {
 LEVEL_PATH = "res/levels/"
 
 class Field:
-    def __init__(self, num:int,  neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=False):
+    def __init__(self, num:int,  neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=0):
         self.updateCallback = None
         self.ev_task = None
         self.num = num
@@ -53,8 +53,8 @@ class Field:
         return self.attr[key]
 
     def __setitem__(self, key: str, value: Any):
-        if(self.updateCallback) != None: self.updateCallback()
         self.attr[key] = value
+        if(self.updateCallback) != None: self.updateCallback()
 
     
     @blocked.setter
@@ -104,6 +104,7 @@ class Field:
     def exit(self):
         if self.ev_task != None:
             self.ev_task.cancel()
+    
 class Level:
     def __init__(self,  name : str, fieldsInit : Dict[int, Dict[str, str]], startField : int, graph : List[Tuple], grid : List[List[int]]= None):
         player.player = player.player
@@ -112,11 +113,11 @@ class Level:
         registeredEvents.clear()
         self.name = name
         self.graph = graph
-        self.fieldDict = {}
+        fields.fields = {}
         # Initialize fields
         for i in fieldsInit:
             # logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
-            self.fieldDict[int(i)] = Field.from_dict(int(i), cfg=fieldsInit[i])
+            fields.fields[int(i)] = Field.from_dict(int(i), cfg=fieldsInit[i])
                 
         #Initialize grid
         self.grid = grid
@@ -124,9 +125,9 @@ class Level:
         self.width = len(self.grid[0])
         for i in range(self.height):
             for j in range(self.width):
-                if not grid[i][j] in self.fieldDict:                
+                if not grid[i][j] in fields.fields:                
                     logger.info("Level %s undefined field %d", self.name, grid[i][j])
-                    self.fieldDict[grid[i][j]] = Field(grid[i][j])
+                    fields.fields[grid[i][j]] = Field(grid[i][j])
                 for d in DIRECTIONS:
                     i2 = i + DIRECTIONS[d][0]
                     j2 = j + DIRECTIONS[d][1]
@@ -134,25 +135,26 @@ class Level:
                         fieldA = grid[i][j]
                         fieldB = grid[i2][j2]
                         if([fieldA, fieldB] in self.graph or [fieldB, fieldA] in self.graph):
-                            self.fieldDict[fieldA].neighbours[d] = fieldB
-    
+                            fields.fields[fieldA].neighbours[d] = fieldB
+        fields.setFields(fields.fields)
+        
     def getField(self, i, j) -> Field:
-        return self.fieldDict[self.grid[i][j]]
+        return fields.fields[self.grid[i][j]]
     def move(self, direction : str):
         cur = player.player['currentField']
-        res = self.fieldDict[cur].move(direction)
+        res = fields.fields[cur].move(direction)
         if(res == False): return False
-        if(self.fieldDict[res].blocked): return False
-        self.fieldDict[cur].exit()
+        if(fields.fields[res].blocked): return False
+        fields.fields[cur].exit()
         player.player['currentField'] = res
         pushEvent("move", {"src" : cur, "dest":res})
-        self.fieldDict[res].enter()
+        fields.fields[res].enter()
         return True
     def start(self):
-        self.fieldDict[player.player['currentField']].enter()
+        fields.fields[player.player['currentField']].enter()
 
     def inspect(self):
-        return self.fieldDict[player.player['currentField']].inspect()
+        return fields.fields[player.player['currentField']].inspect()
     
     def get_cord(self, fieldId:int) -> Tuple[int, int]:
         for i in range(self.height):
@@ -160,8 +162,9 @@ class Level:
                 if(self.grid[i][j] == fieldId): return (i, j)
         return None
     def exit(self):
-        for f in self.fieldDict:
-            self.fieldDict[f].exit()
+        for f in fields.fields:
+            fields.fields[f].exit()
+
 class levelConfig(Config):
     CONFIG_PATH=Path(LEVEL_PATH).expanduser()
     def save_to_file(self):
