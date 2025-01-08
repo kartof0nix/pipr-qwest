@@ -224,6 +224,8 @@ class itemSquare(item):
     fg='.'
     bg_style = ''
     fg_style = ''
+    blocked='x'
+    blocked_style='yellow'
     
     def __init__(self, field : Field):
         # super().__init__()
@@ -237,15 +239,16 @@ class itemSquare(item):
         self.bg_style=["magenta", "cyan", "default"][self.seed%3]
         self.fg_style=["magenta", "cyan", "default"][(self.seed+1)%3]
         self.decorations = list(self.field.decorations)
-        self.update_paths()
+        self.update()
+        self.field.updateCallback = self.update
         
-    def update_paths(self):
+    def update(self):
         self.grid = [[0 for i in range(3)] for j in range(3)]
         self.grid[1][1]=True
         for i in range(4):
             self.grid[1 + AIM[i][0] ][ 1 + AIM[i][1] ] = self.paths[i]
         if(not True in self.paths): self.grid[1][1]=False
-        
+        self.cacheSize=None
     def cords_to_pos(self, item_size:Tuple[int, int], cord:Tuple[int, int]) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         (x, y) = item_size
         def calc(n:int, poz:int): return int((n//3)*poz + min(n%3, poz))
@@ -270,8 +273,12 @@ class itemSquare(item):
     def _sketch(self, item_size:Tuple[int, int]):
         rnd = random.Random(self.seed)
         (x, y) = item_size
-        out   = [[self.fg if self.grid[i*3//x][j*3//y] else self.bg for j in range(y)] for i in range(x)]
-        style = [[self.fg_style if self.grid[i*3//x][j*3//y] else self.bg_style for j in range(y)] for i in range(x)]
+        if(self.field.blocked):
+            out   = [[self.blocked if self.grid[i*3//x][j*3//y] else self.bg for j in range(y)] for i in range(x)]
+            style = [[self.blocked_style if self.grid[i*3//x][j*3//y] else self.bg_style for j in range(y)] for i in range(x)]
+        else:
+            out   = [[self.fg if self.grid[i*3//x][j*3//y] else self.bg for j in range(y)] for i in range(x)]
+            style = [[self.fg_style if self.grid[i*3//x][j*3//y] else self.bg_style for j in range(y)] for i in range(x)]
         max_size = (item_size[0]//3, item_size[1]//3)
 
         # Apply decorations
@@ -290,6 +297,8 @@ class itemSquare(item):
             dec.apply(poz, (dec_x, dec_y), out, style)
         return (out, style)
 
+    def __del__(self):
+        self.field.updateCallback = None
 class itemSquareForest(itemSquare):
     def __init__(self, field):
         super().__init__(field)
@@ -298,6 +307,7 @@ class itemSquareForest(itemSquare):
         self.bg_style = 'green'
         self.fg_style = 'default'
         self.seed = self.field.num + int(bytes(self.field.player['currentField']).hex(), 16)
+        self.rnd = random.Random(self.seed)
         self.decorations 
     def _sketch(self, item_size):
         rnd = random.Random(self.seed)
@@ -311,7 +321,10 @@ class itemSquareForest(itemSquare):
         self.decorations = self.decorations[:-now_deco]
         
         return (out, style)
-        
+    @property
+    def blocked(self):
+        chars=[' ', ' ', ' ', '@', '.', '!', ' ', ' ', '&', ',', ' ', ' ', ' ']
+        return chars[self.rnd.randint(0, len(chars)-1)]
 squareThemes = {
     "default":itemSquare,
     "forest":itemSquareForest

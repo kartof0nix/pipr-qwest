@@ -23,15 +23,50 @@ DIRECTIONS = {
 LEVEL_PATH = "res/levels/"
 
 class Field:
-    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", decorations:List=[]):
+    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=False):
+        self.updateCallback = None
         self.ev_task = None
         self.num = num
-        self.neighbours = dict(neighbours)
         self.eventOnEnter = eventOnEnter
         self.eventOnInspect = eventOnInspect
         self.eventOnLeave = eventOnLeave
-        self.decorations = decorations
-        
+        self._neighbours = dict(neighbours)
+        self._decorations = decorations
+        self._obstacles = obstacles
+        self._blocked = False
+    
+    @property
+    def blocked(self):
+        return self._blocked
+    @property
+    def neighbours(self):
+        return self._neighbours
+    @property
+    def decorations(self):
+        return self._decorations
+    @property
+    def obstacles(self):
+        return self._obstacles
+    
+    @blocked.setter
+    def blocked(self, value):
+        if(self.updateCallback) != None: self.updateCallback()
+        self._blocked = value
+    @neighbours.setter
+    def neighbours(self, value):
+        if(self.updateCallback) != None: self.updateCallback()
+        self._neighbours = value
+    @decorations.setter
+    def decorations(self, value):
+        if(self.updateCallback) != None: self.updateCallback()
+        self._decorations = value
+    @obstacles.setter
+    def obstacles(self, value):
+        if(self.updateCallback) != None: self.updateCallback()
+        self._obstacles = value
+    
+    
+    
     @classmethod
     def from_dict(self, num:int, player, cfg:Dict):
         res = Field(player=player, num=num)
@@ -41,6 +76,8 @@ class Field:
         if ('eventOnInspect') in cfg: res.eventOnInspect = cfg['eventOnInspect']     
         if ('eventOnLeave') in cfg: res.eventOnLeave = cfg['eventOnLeave']     
         if ('decorations') in cfg: res.decorations = cfg['decorations']     
+        if ('obstacles') in cfg: res.obstacles = cfg['obstacles']     
+        if ('blocked') in cfg: res.blocked = cfg['blocked']     
         return res
 
     def enter(self):
@@ -57,17 +94,13 @@ class Field:
         
     def move(self, direction:str) -> bool:
         if( direction not in self.neighbours ): return False
-        self.exit()
-        self.player['currentField'] = self.neighbours[direction]
-        pushEvent("move", {"src" : self.num, "dest":self.neighbours[direction]})
-        return True
+        return self.neighbours[direction]
     
     def exit(self):
         if self.ev_task != None:
             self.ev_task.cancel()
 class Level:
     def __init__(self, player : PlayerClass, name : str, fieldsInit : Dict[int, Dict[str, str]], startField : int, graph : List[Tuple], grid : List[List[int]]= None):
-        self.queue = asyncio.Queue()
         self.player = player
         # self.eventList = eventList
         player['currentField'] = startField
@@ -97,13 +130,18 @@ class Level:
                         fieldB = grid[i2][j2]
                         if([fieldA, fieldB] in self.graph or [fieldB, fieldA] in self.graph):
                             self.fieldDict[fieldA].neighbours[d] = fieldB
+    
     def getField(self, i, j) -> Field:
         return self.fieldDict[self.grid[i][j]]
     def move(self, direction : str):
-        res = self.fieldDict[self.player['currentField']].move(direction)
-        if(not res): return False
-        
-        self.fieldDict[self.player['currentField']].enter()
+        cur = self.player['currentField']
+        res = self.fieldDict[cur].move(direction)
+        if(res == False): return False
+        if(self.fieldDict[res].blocked): return False
+        self.fieldDict[cur].exit()
+        self.player['currentField'] = res
+        pushEvent("move", {"src" : cur, "dest":res})
+        self.fieldDict[res].enter()
         return True
     def start(self):
         self.fieldDict[self.player['currentField']].enter()
