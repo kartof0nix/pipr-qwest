@@ -1,11 +1,11 @@
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.logic.template import ev_template
 from src.events import eventFromDict, launchEvents, registeredEvents
 from src.common.event_queue import pushEvent
 import json
-
+ 
 from pathlib import Path
-from typing import List, Tuple, Dict
+from typing import Any, List, Tuple, Dict
 import logging
 import traceback
 import asyncio
@@ -23,54 +23,59 @@ DIRECTIONS = {
 LEVEL_PATH = "res/levels/"
 
 class Field:
-    def __init__(self, num:int, player : PlayerClass, neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=False):
+    def __init__(self, num:int,  neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=False):
         self.updateCallback = None
         self.ev_task = None
         self.num = num
         self.eventOnEnter = eventOnEnter
         self.eventOnInspect = eventOnInspect
         self.eventOnLeave = eventOnLeave
-        self._neighbours = dict(neighbours)
-        self._decorations = decorations
-        self._obstacles = obstacles
-        self._blocked = False
-    
+        self.attr={
+            'neighbours' : dict(neighbours),
+            'decorations' : decorations,
+            'obstacles' : obstacles,
+            'blocked' : blocked
+        }    
     @property
     def blocked(self):
-        return self._blocked
+        return self.attr['blocked']
     @property
     def neighbours(self):
-        return self._neighbours
+        return self.attr['neighbours']
     @property
     def decorations(self):
-        return self._decorations
+        return self.attr['decorations']
     @property
     def obstacles(self):
-        return self._obstacles
+        return self.attr['obstacles']
+    
+    def __getitem__(self, key: str) -> Any:
+        return self.attr[key]
+
+    def __setitem__(self, key: str, value: Any):
+        if(self.updateCallback) != None: self.updateCallback()
+        self.attr[key] = value
+
     
     @blocked.setter
     def blocked(self, value):
-        if(self.updateCallback) != None: self.updateCallback()
-        self._blocked = value
+        self['blocked']=value
     @neighbours.setter
     def neighbours(self, value):
-        if(self.updateCallback) != None: self.updateCallback()
-        self._neighbours = value
+        self['neighbours']=value
     @decorations.setter
     def decorations(self, value):
-        if(self.updateCallback) != None: self.updateCallback()
-        self._decorations = value
+        self['decorations']=value
     @obstacles.setter
     def obstacles(self, value):
-        if(self.updateCallback) != None: self.updateCallback()
-        self._obstacles = value
+        self['obstacles']=value
     
     
     
     @classmethod
-    def from_dict(self, num:int, player, cfg:Dict):
-        res = Field(player=player, num=num)
-        self.player = player
+    def from_dict(self, num:int, cfg:Dict):
+        res = Field(num=num)
+        player.player = player.player
         if ('neighbours') in cfg: res.neighbours = cfg['neighbours']     
         if ('eventOnEnter') in cfg: res.eventOnEnter = cfg['eventOnEnter']     
         if ('eventOnInspect') in cfg: res.eventOnInspect = cfg['eventOnInspect']     
@@ -100,10 +105,10 @@ class Field:
         if self.ev_task != None:
             self.ev_task.cancel()
 class Level:
-    def __init__(self, player : PlayerClass, name : str, fieldsInit : Dict[int, Dict[str, str]], startField : int, graph : List[Tuple], grid : List[List[int]]= None):
-        self.player = player
+    def __init__(self,  name : str, fieldsInit : Dict[int, Dict[str, str]], startField : int, graph : List[Tuple], grid : List[List[int]]= None):
+        player.player = player.player
         # self.eventList = eventList
-        player['currentField'] = startField
+        player.player['currentField'] = startField
         registeredEvents.clear()
         self.name = name
         self.graph = graph
@@ -111,7 +116,7 @@ class Level:
         # Initialize fields
         for i in fieldsInit:
             # logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
-            self.fieldDict[int(i)] = Field.from_dict(int(i), player=player, cfg=fieldsInit[i])
+            self.fieldDict[int(i)] = Field.from_dict(int(i), cfg=fieldsInit[i])
                 
         #Initialize grid
         self.grid = grid
@@ -121,7 +126,7 @@ class Level:
             for j in range(self.width):
                 if not grid[i][j] in self.fieldDict:                
                     logger.info("Level %s undefined field %d", self.name, grid[i][j])
-                    self.fieldDict[grid[i][j]] = Field(grid[i][j], player)
+                    self.fieldDict[grid[i][j]] = Field(grid[i][j])
                 for d in DIRECTIONS:
                     i2 = i + DIRECTIONS[d][0]
                     j2 = j + DIRECTIONS[d][1]
@@ -134,20 +139,20 @@ class Level:
     def getField(self, i, j) -> Field:
         return self.fieldDict[self.grid[i][j]]
     def move(self, direction : str):
-        cur = self.player['currentField']
+        cur = player.player['currentField']
         res = self.fieldDict[cur].move(direction)
         if(res == False): return False
         if(self.fieldDict[res].blocked): return False
         self.fieldDict[cur].exit()
-        self.player['currentField'] = res
+        player.player['currentField'] = res
         pushEvent("move", {"src" : cur, "dest":res})
         self.fieldDict[res].enter()
         return True
     def start(self):
-        self.fieldDict[self.player['currentField']].enter()
+        self.fieldDict[player.player['currentField']].enter()
 
     def inspect(self):
-        return self.fieldDict[self.player['currentField']].inspect()
+        return self.fieldDict[player.player['currentField']].inspect()
     
     def get_cord(self, fieldId:int) -> Tuple[int, int]:
         for i in range(self.height):
@@ -163,7 +168,7 @@ class levelConfig(Config):
         pass #Don't overrite the file contents
 
 """Load level from file"""
-def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> Level:
+def loadLevel(filename : str,  startField: int = None) -> Level:
     s = levelConfig(filename,
         {
             "name" : filename,
@@ -176,9 +181,9 @@ def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> L
     )
     try:
         if(startField == None): startField = s['startField'] # startField <- level config  
-        if(startField == None): startField = player['currentField']
+        if(startField == None): startField = player.player['currentField']
         logger.debug(s.config)
-        lvl = Level(player=player,
+        lvl = Level(
                     name=s['name'],
                     fieldsInit=s['fields'],
                     startField=startField,
@@ -186,7 +191,7 @@ def loadLevel(filename : str, player : PlayerClass, startField: int = None) -> L
                     grid=s['grid'] 
                 )
         for ev in s['events']:
-            eventFromDict(type=ev['eventType'], eventId=ev['eventId'], player=player, config=ev['params'])
+            eventFromDict(type=ev['eventType'], eventId=ev['eventId'], config=ev['params'])
         lvl.start()
         return lvl
     except Exception as e:

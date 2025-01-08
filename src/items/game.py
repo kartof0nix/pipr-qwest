@@ -1,5 +1,5 @@
 from src.logic.template import ev_template, boolEval
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.common.event_queue import pushEvent
 
 # from src.level import LevelManager
@@ -31,10 +31,10 @@ class GameEvent(metaclass=RegisterEventMeta):
         "nextEvent": "",
         "assignValues": []
     }
-    def __init__(self, eventId, config: dict, player : PlayerClass, uiEvent:bool=False):
+    def __init__(self, eventId, config: dict,  uiEvent:bool=False):
         global registeredEvents
         registeredEvents |= {eventId: self}
-        self.player = player
+        player.player = player.player
         self.eventId = eventId
         self.uiEvent = True
         for key in self.defaultConfig:
@@ -51,7 +51,7 @@ class GameEvent(metaclass=RegisterEventMeta):
         pushEvent("event_end", {"event":self})
         # logger.info("Len: %s, %d", self.eventId,  len(self.assignValues))
         for (key, template) in self.assignValues:
-            self.player[key] = type(self.player[key])(ev_template(template, self.player))
+            player.player[key] = type(player.player[key])(ev_template(template))
         return self.nextEvent
 
 
@@ -62,13 +62,13 @@ class IfEvent(GameEvent):
         'eventIdFalse': ""
     }
 
-    def __init__(self, eventId: str, config: dict, player : PlayerClass):
+    def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
-        super().__init__(eventId, config, player)
+        super().__init__(eventId, config)
 
     async def __call__(self, *args, **kwds) -> str:
         await super().__call__()
-        if(boolEval(self.condition, self.player)):
+        if(boolEval(self.condition)):
             return self.eventIdTrue
         else:
             return self.eventIdFalse
@@ -82,15 +82,15 @@ class DamageEvent(GameEvent):
         'assignValues': []
     }
 
-    def __init__(self, eventId: str, config: dict, player : PlayerClass):
+    def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
         if('assignValues' not in config): config['assignValues'] = []
-        config['assignValues'] += [('health', "{{ player['health']- %s}}" % (config['hp']))]
-        super().__init__(eventId, config, player, True)
+        config['assignValues'] += [('health', "{{ player.player['health']- %s}}" % (config['hp']))]
+        super().__init__(eventId, config,  True)
 
     async def __call__(self):
         res = await super().__call__()
-        if(self.player['health'] <= 0):
+        if(player.player['health'] <= 0):
             pushEvent('gameover')
         return res
 
@@ -104,10 +104,10 @@ class menuEvent(GameEvent):
     def select(self, entryid=0):
         self.selection = entryid
         self.complete.set()
-    def __init__(self, eventId: str, config: dict, player : PlayerClass):
+    def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
         self.selection = 0
-        super().__init__(eventId, config, player, uiEvent=True)
+        super().__init__(eventId, config,  uiEvent=True)
 
     async def __call__(self):
         await super().__call__()
@@ -120,10 +120,10 @@ class ConversationEvent(GameEvent):
         "nextEvent": ""
     }
 
-    def __init__(self, eventId: str, config: dict, player : PlayerClass):
+    def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
         self.current = 0
-        super().__init__(eventId, config, player, uiEvent=True)
+        super().__init__(eventId, config,  uiEvent=True)
 
     def currentLine(self) -> Tuple[str, str]:
         return self.dialogue[self.current]
@@ -143,9 +143,9 @@ class changeLevelEvent(GameEvent):
         "nextEvent": ""
     }
 
-    def __init__(self, eventId: str, config: dict, player : PlayerClass):
+    def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
-        super().__init__(eventId, config, player, uiEvent=True)
+        super().__init__(eventId, config,  uiEvent=True)
 
     async def __call__(self):
         res = await super().__call__()
@@ -154,11 +154,11 @@ class changeLevelEvent(GameEvent):
         # LevelManager.changeLevel(self.nextLevel, self.nextField)
         return res
     
-def eventFromDict(type: str, eventId: str, player : PlayerClass, config: dict = {}):
+def eventFromDict(type: str, eventId: str,  config: dict = {}):
     try:
-        return eventTypes[type](eventId, config, player)
+        return eventTypes[type](eventId, config)
     except KeyError as e:
         logger.error("Event type '%s' undefined", type)
         # Return dummy event as quick-fix
-        return GameEvent(eventId, config, player)
+        return GameEvent(eventId, config)
 # e = changeLevelEvent()

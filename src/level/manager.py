@@ -5,7 +5,7 @@ from src.level.game import Field, Level, loadLevel, LEVEL_PATH
 from src.level.graphics import LevelView
 from src.common import event_queue
 from src.events.game import changeLevelEvent
-from src.logic.player import PlayerClass
+from src.logic import player
 
 import asyncio
 import logging
@@ -19,12 +19,12 @@ class LevelManagerClass:
         self.exitEvent = asyncio.Event()
         event_queue.registerHandler("event_end", self.changeLevelListener)
         event_queue.registerHandler("gameover", self.gameOverListener)
-    def callLevel(self, filename : str, player : PlayerClass, startField=None):
-        asyncio.create_task(self._callLevel(filename, player=player, startField=startField))
+    def callLevel(self, filename : str, startField=None):
+        asyncio.create_task(self._callLevel(filename, startField=startField))
 
-    async def _callLevel(self, filename : str, player : PlayerClass, startField=None) -> Level:
+    async def _callLevel(self, filename : str, startField=None) -> Level:
         try:
-            self.lvl = loadLevel(filename, player=player, startField=startField)
+            self.lvl = loadLevel(filename, startField=startField)
             with LevelView(self.lvl) as l:
                 await self.exitEvent.wait()
             logger.info("Closing level %s", self.lvl.name)

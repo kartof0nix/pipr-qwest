@@ -10,7 +10,7 @@ logging.basicConfig(filename='qwest.log',
 import asyncio
 from src.graphics import tui_main
 from src.level import LevelManager
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.common.event_queue import loop
 
 # a = fabricCanvas([["a", "b"], ["c", "d"]], [["", ""], ["", ""]])
@@ -19,8 +19,9 @@ from src.common.event_queue import loop
 # print(a.content())
 async def test():
     logger.info(f"Starting test module {__package__}")
-    player = PlayerClass("testLevel.json")
-    lvl = LevelManager.callLevel("asriel_den.json", player=player)
+    # player.player = PlayerClass("testLevel.json")
+    player.loadSave("testLevel.json")
+    lvl = LevelManager.callLevel("asriel_den.json")
     tui_main.aloop.create_task(loop())
     await asyncio.sleep(10)
     LevelManager.delLevel()

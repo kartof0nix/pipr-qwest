@@ -4,6 +4,7 @@ Call the package directly to run it.
 from pathlib import Path
 import logging
 from typing import List
+
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='qwest.log',
                         level=logging.INFO, filemode="w")
@@ -12,7 +13,7 @@ import urwid
 import asyncio
 from src.graphics import tui_main
 from src.level import LevelManager
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.common import event_queue
 from src.graphics.settings import launchSettings
 from src.graphics.common import buttonAttr, buttonAttr2, niceFiller
@@ -52,7 +53,7 @@ class SelectSaveView(urwid.Pile):
     def __init__(self):
         self.res = None
         self.selected = asyncio.Event()
-        saves = main.listSaves()
+        saves = player.listSaves()
         widget_list = [buttonAttr(urwid.Button(i, self.select)) for i in saves]
         widget_list = [urwid.Text(("bold", "Select save:")), urwid.Divider()] + widget_list
         widget_list.append(urwid.Divider())
@@ -64,7 +65,7 @@ class SelectSaveView(urwid.Pile):
     def keypress(self, size, key):
         if(key=='d'):
             logger.info("remove save %s", self.focus.base_widget.get_label())
-            main.removeSave(self.focus.base_widget.get_label())
+            player.removeSave(self.focus.base_widget.get_label())
             self.selected.set()
         return super().keypress(size, key)
     async def choice(self):
@@ -109,33 +110,18 @@ class MainView(urwid.Pile):
 class Main:
     
     async def exit(self):
-        self.player.save_to_file()
+        player.player.save_to_file()
         tui_main.view.stop()
     
-    def listSaves(self) -> List[str]:
-        res = []
-        try:
-            # Create a Path object for the directory
-            directory = Path(PlayerClass.CONFIG_PATH)
-            for item in directory.iterdir():
-                if item.is_file():
-                    res.append(item.name.removesuffix(".json"))
-        except Exception as e:
-            logger.error("Listing saves failed : %s", e)
-        return res
-    def removeSave(self, save:str):
-        save += ".json"
-        file = Path(PlayerClass.CONFIG_PATH).joinpath(save)
-        file.unlink()
-        
+
     async def startGame(self, save:str):
-        self.player = PlayerClass(save + ".json")
-        lvl = LevelManager.callLevel(self.player['currentLevel'], player=self.player)
+        player.loadSave(save)
+        lvl = LevelManager.callLevel(player.player['currentLevel'])
         logger.info(f"Game loaded")
     # async 
     #     await asyncio.sleep(10)
     #     logger.info(f"Del gameq")
-    #     self.player['currentLevel'] = 'asriel_passage.json'
+    #     player.player['currentLevel'] = 'asriel_passage.json'
     #     LevelManager.delLevel()
         # del lvl
     

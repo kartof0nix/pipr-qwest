@@ -1,15 +1,16 @@
 import urwid
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.common import event_queue
+
 class overlayWidget(urwid.Pile):
     def update(self):
-        self.widgetList[0].set_text(["Health:", str(self.player['health'])])
+        self.widgetList[0].set_text(["Health:", str(player.player['health'])])
     async def eventHandler(self, params=None):
         self._invalidate()
-    def __init__(self, player : PlayerClass):
+    def __init__(self):
         event_queue.registerHandler("event_end", self.eventHandler)
-        self.player=player
-        self.widgetList = [urwid.Text(["Health:", str(self.player['health'])])]
+        player.player=player.player
+        self.widgetList = [urwid.Text(["Health:", str(player.player['health'])])]
         super().__init__(self.widgetList)
         self._selectable=False
     def getSize(self):

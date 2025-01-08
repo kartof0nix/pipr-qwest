@@ -70,9 +70,9 @@ class changeLevelEventTUI(notifyEventTUI):
 #         "nextEvent": ""
 #     }
 
-#     def __init__(self, eventId: str, config: dict, player : PlayerClass):
+#     def __init__(self, eventId: str, config: dict):
 #         self.defaultConfig |= self.localConfig
-#         super().__init__(eventId, config, player)
+#         super().__init__(eventId, config)
 
 #     def __call__(self):
 #         return super().__call__()
@@ -109,9 +109,9 @@ class menuEventTUI(GameEventTUI):
 #         'eventList': []
 #     }
 
-#     def __init__(self, eventId: str, config: dict, player : PlayerClass):
+#     def __init__(self, eventId: str, config: dict):
 #         self.defaultConfig |= self.localConfig
-#         super().__init__(eventId, config, player)
+#         super().__init__(eventId, config)
 
 #     def __call__(self):
 #         return super().__call__()

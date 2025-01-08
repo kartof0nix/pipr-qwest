@@ -2,7 +2,7 @@ from src.graphics import tui_main
 from src.graphics.common import notify
 from src.graphics.pauseMenu import PauseMenu
 from src.level import Level, Field
-from src.logic.player import PlayerClass
+from src.logic import player
 from src.level.textures import dynamicTexture, current_itemSquare, PlayerTexture
 from src.common.event_queue import registerHandler, unregisterHandler
 from src.level.controls import Control
@@ -78,7 +78,7 @@ class fabricGrid(fabric):
         _selectable=True
         self.handlekey = handlekey
         self.lastSize = (0, 0)
-        self.playerTexture = PlayerTexture(level, (0, 0)) # Can't init player texture coz canva
+        self.playerTexture = PlayerTexture(level, (0, 0)) # Can't init player.player texture coz canva
         self.n = level.height
         self.m = level.width
         self.level = level
@@ -118,7 +118,7 @@ class fabricGrid(fabric):
         return self.playerTexture.pos == self.playerTexture.next_pos
     def keypress(self, size, key):
         if(key == "esc"):
-            tui_main.add_frame(PauseMenu(self.level.player), ('relative', 80), ('relative', 70), ('center', 'middle'), "Pause menu")
+            tui_main.add_frame(PauseMenu(), ('relative', 80), ('relative', 70), ('center', 'middle'), "Pause menu")
         elif(self.complete()):
             return self.handlekey(key)
     def stopTasks(self):
@@ -133,7 +133,7 @@ class LevelView:
             self.fabric.init(self.level, self.controlModule.handleKey)
             self.last_bottom = tui_main.view.bottom
             tui_main.view.bottom = self.fabric
-            overlay = overlayWidget(self.level.player)
+            overlay = overlayWidget()
             tui_main.add_frame(overlay, overlay.getSize()[1], overlay.getSize()[0], ('left', 'top'))
             tui_main.loop.draw_screen()
             registerHandler("move", self.fabric.update)

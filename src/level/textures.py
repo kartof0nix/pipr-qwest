@@ -2,7 +2,7 @@
 from src.common.config import Setting, registered_settings
 from src.level import Level, Field
 from src.graphics import tui_main as tui_main
-
+from src.logic import player
 
 from time import time
 from pathlib import Path
@@ -202,7 +202,7 @@ class PlayerTexture(dynamicTexture):
         try:
             (x, y) = grid_size
             self.resize((x//self.level.height//3, y//self.level.width//3))
-            field = self.level.player['currentField']
+            field = player.player['currentField']
             (gx, gy) = self.level.get_cord(field)
             (n, m) = (self.level.height, self.level.width)
             x0 = x0 = x * gx// n
@@ -211,13 +211,13 @@ class PlayerTexture(dynamicTexture):
             y1 = y * (gy+1) // m
             
             (off_x, off_y) = (x0 + (x1-x0+2)//3, y0 + (y1-y0+2)//3 )
-            # logger.info("Drawing player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
+            # logger.info("Drawing player.player : size=%s, field=%d, (gx, gy)=%s, (ox, oy)=%s", grid_size, field, (gx, gy), (off_x, off_y))
             if(not instant):
                 self.move_anim((off_x, off_y))
             else:
                 self.move_instant(((off_x), (off_y)))
         except TypeError as e:
-            logger.error('Update dailed : %s, to field:%s ', e, self.level.player['currentField'])
+            logger.error('Update dailed : %s, to field:%s ', e, player.player['currentField'])
 
 class itemSquare(item):
     bg='#'
@@ -306,7 +306,7 @@ class itemSquareForest(itemSquare):
         self.bg = '.'
         self.bg_style = 'green'
         self.fg_style = 'default'
-        self.seed = self.field.num + int(bytes(self.field.player['currentField']).hex(), 16)
+        self.seed = self.field.num + int(bytes(player.player['currentField']).hex(), 16)
         self.rnd = random.Random(self.seed)
         self.decorations 
     def _sketch(self, item_size):

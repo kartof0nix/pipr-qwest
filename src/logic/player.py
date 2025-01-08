@@ -1,6 +1,10 @@
+from typing import List
 from src.common.config import Config
 
 from pathlib import Path
+
+from logging import getLogger
+logger = getLogger(__name__)
 
 class Item:
     def __init__(self, itemId : str, name : str = None, desc : str = ""):
@@ -28,7 +32,7 @@ item_lib = {i.itemId : i for i in [
     
 ]}
 
-"""Define a universal player (save) class since multiple saves are possible"""
+"""Define a universal player.player (save) class since multiple saves are possible"""
 class PlayerClass(Config):
     CONFIG_PATH=Path("~/.pipr-qwest/saves").expanduser()
     def __init__(self, filename):
@@ -43,5 +47,26 @@ class PlayerClass(Config):
         
     def set_value(self, name, value):
         self.config[name] = value
-        
-        
+    
+
+def listSaves() -> List[str]:
+    res = []
+    try:
+        # Create a Path object for the directory
+        directory = Path(PlayerClass.CONFIG_PATH)
+        for item in directory.iterdir():
+            if item.is_file():
+                res.append(item.name.removesuffix(".json"))
+    except Exception as e:
+        logger.error("Listing saves failed : %s", e)
+    return res
+def removeSave(save:str):
+    save += ".json"
+    file = Path(PlayerClass.CONFIG_PATH).joinpath(save)
+    file.unlink()
+    
+def loadSave(save:str):
+    global player
+    player = PlayerClass(save + ".json")
+    
+    

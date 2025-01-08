@@ -1,3 +1,5 @@
 *cache*
+playground/*
 *.log
 .vscode/*
+.venv/*
