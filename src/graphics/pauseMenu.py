@@ -9,18 +9,23 @@ from src.common.config import Setting, registered_settings
 from src.graphics import tui_main
 from src.graphics.settings import launchSettings
 from src.graphics.common import CustomButton, buttonAttr, notify
-from src.globals import player
+from src.globals import player, fields
 from src.common import event_queue
 import logging
 logger = logging.getLogger(__name__)
 
+def saveGame():
+    player.player.save_to_file()
+    for field in fields.fields:
+        fields.fields[field].attr.save_to_file()
+    
             
 class PauseMenu(urwid.Pile):
     def saveButton(self, butt : urwid.Button):
-        player.player.save_to_file()
+        saveGame()
         notify("Game saved!")
     def saveAndExitButton(self, butt : urwid.Button):
-        player.player.save_to_file()
+        saveGame()
         event_queue.pushEvent("gameover")
     def exitButton(self, butt : urwid.Button):
         event_queue.pushEvent("gameover")

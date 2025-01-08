@@ -11,7 +11,8 @@ logger = logging.getLogger(__name__)
 
 
 '''
-A config class should be generated once for a module - with init specifing what config fields it contains'''
+A config class should be generated once for each module that needs it - with init specifing what config fields it contains
+'''
 
 # def clearAllSettings():
 #     """
@@ -28,8 +29,8 @@ class Config:
     def __init__(self, filename, defaultValues : Dict[str, Any] = {}, readAll=False):
         self.readAll = readAll
         self.name = filename 
-        if(not self.CONFIG_PATH.is_dir()): 
-            self.CONFIG_PATH.mkdir()
+        if(not self.CONFIG_PATH.exists()): 
+            self.CONFIG_PATH.mkdir(parents=True)
             logger.info("Directory %s not found, creating", self.CONFIG_PATH.absolute())
         self.defaultValues = defaultValues
         self.fpath = self.CONFIG_PATH.joinpath( filename)

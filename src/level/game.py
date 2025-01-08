@@ -22,20 +22,26 @@ DIRECTIONS = {
 }
 LEVEL_PATH = "res/levels/"
 
+
 class Field:
-    def __init__(self, num:int,  neighbours : Dict[str, int] = {}, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", obstacles:List=[], decorations:List=[], blocked=0):
+    def __init__(self, num:int, eventOnEnter : str = "", eventOnInspect : str = "", eventOnLeave : str = "", attr={}, lname="main"):
+        class FieldConfig(Config):
+            CONFIG_PATH=Path("~/.pipr-qwest/saves/" + player.player.name.removesuffix(".json") + "/" + lname.removesuffix(".json") ).expanduser()
         self.updateCallback = None
         self.ev_task = None
         self.num = num
         self.eventOnEnter = eventOnEnter
         self.eventOnInspect = eventOnInspect
         self.eventOnLeave = eventOnLeave
-        self.attr={
-            'neighbours' : dict(neighbours),
-            'decorations' : decorations,
-            'obstacles' : obstacles,
-            'blocked' : blocked
-        }    
+        self.attr=FieldConfig(
+            str(self.num),
+            {
+            'neighbours' : {},
+            'decorations' : [],
+            'obstacles' : [],
+            'blocked' : False
+            } | attr
+        )
     @property
     def blocked(self):
         return self.attr['blocked']
@@ -73,16 +79,11 @@ class Field:
     
     
     @classmethod
-    def from_dict(self, num:int, cfg:Dict):
-        res = Field(num=num)
-        player.player = player.player
-        if ('neighbours') in cfg: res.neighbours = cfg['neighbours']     
+    def from_dict(self, num:int, cfg:Dict, lname):
+        res = Field(num=num, attr=cfg, lname=lname)
         if ('eventOnEnter') in cfg: res.eventOnEnter = cfg['eventOnEnter']     
         if ('eventOnInspect') in cfg: res.eventOnInspect = cfg['eventOnInspect']     
         if ('eventOnLeave') in cfg: res.eventOnLeave = cfg['eventOnLeave']     
-        if ('decorations') in cfg: res.decorations = cfg['decorations']     
-        if ('obstacles') in cfg: res.obstacles = cfg['obstacles']     
-        if ('blocked') in cfg: res.blocked = cfg['blocked']     
         return res
 
     def enter(self):
@@ -117,7 +118,7 @@ class Level:
         # Initialize fields
         for i in fieldsInit:
             # logger.debug("Init field %d from dict %s", int(i), fieldsInit[i])
-            fields.fields[int(i)] = Field.from_dict(int(i), cfg=fieldsInit[i])
+            fields.fields[int(i)] = Field.from_dict(int(i), cfg=fieldsInit[i], lname=self.name)
                 
         #Initialize grid
         self.grid = grid
@@ -127,7 +128,7 @@ class Level:
             for j in range(self.width):
                 if not grid[i][j] in fields.fields:                
                     logger.info("Level %s undefined field %d", self.name, grid[i][j])
-                    fields.fields[grid[i][j]] = Field(grid[i][j])
+                    fields.fields[grid[i][j]] = Field(grid[i][j], lname=self.name)
                 for d in DIRECTIONS:
                     i2 = i + DIRECTIONS[d][0]
                     j2 = j + DIRECTIONS[d][1]

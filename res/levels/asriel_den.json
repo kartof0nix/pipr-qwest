@@ -14,7 +14,7 @@
         },
         "3": {},
         "4": {
-            "blocked":true
+            "blocked":1
         },
         "5": {},
         "6": {},
@@ -63,7 +63,27 @@
             "eventType": "DamageEvent",
             "eventId": "goblinFight",
             "params": {
-                "hp": 11
+                "hp": 11,
+                "nextEvent": "goblinDefeated"
+            }
+        },
+        {
+            "eventType": "ConversationEvent",
+            "eventId": "goblinDefeated",
+            "params": {
+                "assignValues": [
+                    ["fields.4.blocked", "0"]
+                ],
+                "dialogue": [
+                    [
+                        "goblin leader",
+                        "Please ... spare us. I can show you the way through the blocked passage ahead."
+                    ],
+                    [
+                        "narrator",
+                        "You spare the goblins and the tell you how to get through."
+                    ]
+                ]   
             }
         },
         {
@@ -78,6 +98,7 @@
                     "goblinFight",
                     ""
                 ]
+                
             }
         }
     ]

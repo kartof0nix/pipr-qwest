@@ -3,34 +3,16 @@ from src.common.config import Config
 
 from pathlib import Path
 
+import shutil
 from logging import getLogger
 logger = getLogger(__name__)
 
-class Item:
-    def __init__(self, itemId : str, name : str = None, desc : str = ""):
-        self.itemId = itemId
-        if(name == None): name = self.itemId.capitalize()
-        self.name = name
-        self.desc = desc
-    def use(self):
-        pass
-    
-class WeaponItem(Item):
-    def __init__(self, itemId : str, dmg : int, name : str = None, desc : str = ""):
-        super().__init__(itemId, name, desc)
-        self.dmg = dmg
-
-class ArmorItem(Item):
-    def __init__(self, itemId : str, ac : int, name : str = None, desc : str = ""):
-        super().__init__(itemId, name, desc)
-        self.ac = ac
-    
-
-item_lib = {i.itemId : i for i in [
-    WeaponItem("mace", 3),
-    ArmorItem("plaete armor", 2)
-    
-]}
+ITEMS = {
+    "sword": {"item_id": "sword", "display_name": "Sword", "attack": 10, "defense": 2},
+    "shield": {"item_id": "shield", "display_name": "Shield", "attack": 2, "defense": 15},
+    "dagger": {"item_id": "dagger", "display_name": "Dagger", "attack": 8, "defense": 1},
+    "helmet": {"item_id": "helmet", "display_name": "Helmet", "attack": 0, "defense": 5}
+}
 
 """Define a universal player.player (save) class since multiple saves are possible"""
 class PlayerClass(Config):
@@ -41,13 +23,34 @@ class PlayerClass(Config):
             'health': 100,
             'armor': 0,
             'attack': 1,
-            'currentLevel':'asriel_den.json'
+            'currentLevel':'asriel_den.json',
+            'inventory': []  # Inventory stores item IDs
         },
         readAll=True)
         
-    def set_value(self, name, value):
-        self.config[name] = value
-    
+    def giveItem(self, item_id: str) -> None:
+        """Adds an item to the player's inventory if it's a valid item."""
+        if item_id not in ITEMS:
+            raise ValueError(f"Item with ID '{item_id}' does not exist.")
+            logger.error(f"Item '{item_id}' added to inventory.")
+        if item_id not in self.config['inventory']:
+            self.config['inventory'].append(item_id)
+            logger.info(f"Item '{item_id}' added to inventory.")
+        else:
+            logger.info(f"Item '{item_id}' is already in the inventory.")
+
+    def hasItem(self, item_id: str) -> bool:
+        """Checks whether the player has a specific item in their inventory."""
+        return item_id in self.config['inventory']
+
+    def calcAttack(self) -> int:
+        """Calculates the player's attack as the maximum attack value of all carried items."""
+        return max((ITEMS[item_id]["attack"] for item_id in self.config['inventory']), default=self.config['attack'])
+
+    def calcDefense(self) -> int:
+        """Calculates the player's defense as the maximum defense value of all carried items."""
+        return max((ITEMS[item_id]["defense"] for item_id in self.config['inventory']), default=self.config['armor'])
+
 
 def listSaves() -> List[str]:
     res = []
@@ -60,10 +63,11 @@ def listSaves() -> List[str]:
     except Exception as e:
         logger.error("Listing saves failed : %s", e)
     return res
+
 def removeSave(save:str):
-    save += ".json"
-    file = Path(PlayerClass.CONFIG_PATH).joinpath(save)
-    file.unlink()
+    saveFile = save + ".json"
+    Path(PlayerClass.CONFIG_PATH).joinpath(saveFile).unlink()
+    shutil.rmtree(Path(PlayerClass.CONFIG_PATH).joinpath(save).absolute() )
     
 def loadSave(save:str):
     global player
