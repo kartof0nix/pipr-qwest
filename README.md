@@ -102,7 +102,8 @@ You may define custom levels in .json files. Refer to (this guide)[LEVEL.md]
 Simple modding is supported via adding files to the 'mod' folder. Currently it is impossible to overrite the behaviour of the game, but you may add your own:
 
 ### GameEvents and GameEventTUI - [documentation](/doc/events/game.md)
-You can achieve this by inhereting from the GameEvent and GameEvent TUI classes. The newly defined Events should become available in the level.json file
+You can achieve this by inhereting from the GameEvent and GameEvent TUI classes. The newly defined Events should become available in the level.json file.
+See the mod/example.py file.
 
 ### Act upon game events
 By registering a listener to the [event queue](/doc/common/event_queue.md) you can act upon various events in the game. The newly launched functions are asynchronous, so you may use this to 'launch' your modpack to add new functionality.
