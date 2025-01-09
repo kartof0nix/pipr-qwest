@@ -2,6 +2,7 @@
 import random
 from random import shuffle
 from src.common.config import Setting, registered_settings
+from src.common.event_queue import pushEvent
 from src.level import Level, Field
 from src.graphics import tui_main as tui_main
 from src.globals import player
@@ -95,6 +96,7 @@ class texture(item):
             # for t in self.textures:
             # logger.info( " Texture %s : '%s' => '%s'", filename, self.textures[t][0][0], bytes(self.textures[t][0][0], 'UTF-8'))
         except Exception as e:
+            pushEvent("error", {"message": "Loading texture %s failed " % str(self.filename)})
             logger.error("Failed to load file: %s", e)
 
     def getSize(self, item_size: Tuple[int, int]):
@@ -110,6 +112,7 @@ class texture(item):
             if (tx <= x and ty <= y and tx + ty >= bx + by):
                 best = t
         if (best == "0x0"):
+            pushEvent("error", {"message": "Sizing texture %s failed " % str(self.filename)})
             logger.error("Texture %s has no size suitale for %s",
                          self.filename, item_size)
             return ([[]], [[]])

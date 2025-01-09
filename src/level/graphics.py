@@ -4,7 +4,7 @@ from src.graphics.pauseMenu import PauseMenu
 from src.level import Level, Field
 from src.globals import player
 from src.level.textures import dynamicTexture, current_itemSquare, PlayerTexture
-from src.common.event_queue import registerHandler, unregisterHandler
+from src.common.event_queue import pushEvent, registerHandler, unregisterHandler
 from src.level.controls import Control
 from src.level.overlay import overlayWidget
 # from urwid import Sizing, Widget, BigText, TextCanvas
@@ -32,34 +32,40 @@ class fabric(urwid.Widget):
 
     def render(self, size: tuple[int, int], focus: bool = False) -> urwid.TextCanvas:
         '''Render thy contents and return the result'''
-        (y, x) = size  # Urwid stores the coordinates swapped, so swap them back on integration
-        (grid, style) = self._render((x, y))
-        # for dt in self.dynamic_textures:
-        attr = []
-        char = []
-        assert (len(style)) == x
-        assert (len(style[0])) == y
-        for i in range(len(style)):
-            attr.append([])
-            char.append(b'')
-            for j in range(len(style[0])):
-                if (j == 0 or str_util.get_char_width(grid[i][j - 1]) <= 1):
-                    # If previous char took two spaces, skip this one
-                    char[i] += bytes(grid[i][j][0], 'UTF-8')
-                    if (j != 0 and attr[i][-1][0] == style[i][j]):
-                        attr[i][-1] = (style[i][j], attr[i][-1]
-                                       [1] + len(bytes(grid[i][j][0], 'UTF-8')))
-                    else:
-                        attr[i].append(
-                            (style[i][j], len(bytes(grid[i][j][0], 'UTF-8'))))
-            # Urwid be stupid, I Don't f *  *  * ing care, let's get it over with and fix it manually
-            while (str_util.calc_width(char[i], 0, len(char[i])) > y):
-                char[i] = char[i][0:-1]
-                attr[i][-1] = (attr[i][-1][0], attr[i][-1][1] - 1)
+        (y, x) = size
+        try:
+            # Urwid stores the coordinates swapped, so swap them back on integration
+            (grid, style) = self._render((x, y))
+            # for dt in self.dynamic_textures:
+            attr = []
+            char = []
+            assert (len(style)) == x
+            assert (len(style[0])) == y
+            for i in range(len(style)):
+                attr.append([])
+                char.append(b'')
+                for j in range(len(style[0])):
+                    if (j == 0 or str_util.get_char_width(grid[i][j - 1]) <= 1):
+                        # If previous char took two spaces, skip this one
+                        char[i] += bytes(grid[i][j][0], 'UTF-8')
+                        if (j != 0 and attr[i][-1][0] == style[i][j]):
+                            attr[i][-1] = (style[i][j], attr[i][-1]
+                                           [1] + len(bytes(grid[i][j][0], 'UTF-8')))
+                        else:
+                            attr[i].append(
+                                (style[i][j], len(bytes(grid[i][j][0], 'UTF-8'))))
+                # Urwid be stupid, I Don't f *  *  * ing care, let's get it over with and fix it manually
+                while (str_util.calc_width(char[i], 0, len(char[i])) > y):
+                    char[i] = char[i][0:-1]
+                    attr[i][-1] = (attr[i][-1][0], attr[i][-1][1] - 1)
 
-        # result = [''.join([style[i][j] + char[i][j] for j in range(y)]) for i in range(x)]
-        self._invalidate()
-        return urwid.TextCanvas(char, attr=attr)
+            # result = [''.join([style[i][j] + char[i][j] for j in range(y)]) for i in range(x)]
+            self._invalidate()
+            return urwid.TextCanvas(char, attr=attr)
+        except Exception as e:
+            pushEvent("error", {"message": "Failed to render canvas: %s" % e})
+            logger.error("Failed to render canvas: %s" % e)
+            return urwid.TextCanvas([(b"/" * y)] * x)
 
     # def add_dynamic_texture(self, dt : dynamicTexture):
     #     self.dynamic_textures.append(dt)
@@ -111,7 +117,8 @@ class fabricGrid(fabric):
                 x1 = x * (i + 1) // self.n
                 y1 = y * (j + 1) // self.m
                 # print(i, j, x0, y0, x1, y1)
-                self.grid[i][j].apply((x0, y0), (x1 - x0, y1 - y0), char, style)
+                self.grid[i][j].apply(
+                    (x0, y0), (x1 - x0, y1 - y0), char, style)
         self.playerTexture.apply_anim(char, style)
         return (char, style)
 
@@ -150,6 +157,7 @@ class LevelView:
             tui_main.loop.draw_screen()
             registerHandler("move", self.fabric.update)
         except Exception as e:
+            pushEvent("error", {"message": "Error: " + str(e)})
             logger.error(e)
             logger.error(traceback.format_exc())
 

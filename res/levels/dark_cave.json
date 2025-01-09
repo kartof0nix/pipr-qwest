@@ -39,6 +39,18 @@
                 "nextLevel": "castle_gate.json",
                 "nextField": 1
             }
+        },{
+            "eventType": "ChangeLevelEvent",
+            "eventId": "level_asriel_big",
+            "params": {
+                "nextLevel": "mythic_forest.json",
+                "nextField": 4
+            }
+        },{
+            "eventType": "MoveBackEvent",
+            "eventId": "moveBack",
+            "params": {
+            }
         }
     ],
     "grid": [
@@ -51,7 +63,8 @@
     "startField": 1,
     "fields": {
         "1": {
-            "_decorations": ["stalagmites"]
+            "eventOnInspect": "level_asriel_big",
+            "decorations": ["door"]
         },
         "2": {
             "eventOnEnter": "bearAttack"

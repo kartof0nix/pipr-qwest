@@ -72,6 +72,14 @@
                 "nextField": 1
             }
             
+        },
+        {
+            "eventType": "ChangeLevelEvent",
+            "eventId": "level_asriel_passage",
+            "params": {
+                "nextLevel": "asriel_passage.json",
+                "nextField":7
+            }
         }
     ],
     "grid": [
@@ -84,7 +92,9 @@
     "startField": 1,
     "fields": {
         "1": {
-            "decorations": ["tree"]
+            "decorations": ["tree", "door"],
+            "eventOnInspect": "level_asriel_passage"
+
         },
         "2": {
             "eventOnEnter": "elfMeeting"

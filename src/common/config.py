@@ -6,6 +6,8 @@ from pathlib import Path
 
 import traceback
 import logging
+
+from src.common.event_queue import pushEvent
 logger = logging.getLogger(__name__)
 
 
@@ -82,6 +84,7 @@ class Config:
         except Exception as e:
             if (self.critical):
                 logger.error("Failed to load file: %s", e)
+                pushEvent("error", {"message": str(e)})
                 logger.debug("Failed to load file: %s", traceback.format_exc())
 
     # Subscription support

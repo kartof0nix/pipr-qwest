@@ -1,3 +1,4 @@
+from src.common.event_queue import pushEvent
 from src.events.game import registeredEvents
 from src.events.graphics import eventTUIs
 
@@ -24,5 +25,7 @@ async def launchEvents(eventId: str):
             eventId = await runEvent(eventId)
         except Exception as e:
             logger.error("Running event %s failed: %s", eventId, e)
+            pushEvent("error", {"message": "Error: " + str(e)})
+
             logger.error(traceback.format_exc())
             return

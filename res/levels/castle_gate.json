@@ -38,6 +38,15 @@
                 "nextLevel": "castle_hall.json",
                 "nextField": 1
             }
+        },
+        {
+            "eventType": "ChangeLevelEvent",
+            "eventId": "exitForest",
+            "params": {
+                "nextLevel": "dark_cave.json",
+                "nextField": 4
+            }
+            
         }
     ],
     "grid": [
@@ -50,11 +59,12 @@
     "startField": 1,
     "fields": {
         "1": {
-            "eventOnEnter": "gateKeeper"
+            "eventOnEnter": "gateKeeper",
+            "eventOnInspect": "exitForest",
+            "decorations": ["door"]
         },
         "2": {
-            "eventOnInspect": "findRoyalPass",
-            "decorations": ["door"]
+            "eventOnInspect": "findRoyalPass"
         },
         "3": {
             "decorations": ["fountain"]

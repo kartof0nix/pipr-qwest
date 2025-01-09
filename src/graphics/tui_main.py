@@ -1,6 +1,7 @@
 from typing import Literal, Tuple
 import urwid
 import asyncio
+from src.common import event_queue
 
 '''Main view class - the manager for widgets, views and general configuration'''
 
@@ -180,11 +181,11 @@ def render(callback, exitFunction):
     ev_loop = urwid.AsyncioEventLoop(loop=aloop)
 
     loop = urwid.MainLoop(view, palette=palette, event_loop=ev_loop)
+
     view.exit = exitFunction
     loop.screen.set_terminal_properties(colors=2 ** 24)
     aloop.create_task(callback())
     loop.run()
-
 
 # global aloop
 # aloop = None
@@ -192,6 +193,7 @@ def render(callback, exitFunction):
 # loop = None
 
 # --- Test module ---
+
 
 async def test_view():
     logger.info("Awaiting")

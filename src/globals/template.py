@@ -2,6 +2,7 @@ import traceback
 from jinja2 import Environment, PackageLoader, select_autoescape
 import logging
 
+from src.common.event_queue import pushEvent
 from src.globals import player, fields
 logger = logging.getLogger(__name__)
 env = Environment(
@@ -22,6 +23,7 @@ def boolEval(template: str):
         return True
     logger.error(
         "Type error while rendering template %s : '%s' not a boolean", template, out)
+    
     return False
 
 
@@ -61,4 +63,5 @@ def setValue(key: str, value):
             raise KeyError
     except Exception as e:
         logger.error("Setting value %s failed: %s", key, e)
+        pushEvent("error", {"message": "Error: " + "Setting value %s failed: %s" % (key, e)})
         logger.error("Traceback: %s", traceback.format_exc())

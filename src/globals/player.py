@@ -5,6 +5,8 @@ from pathlib import Path
 
 import shutil
 from logging import getLogger
+
+from src.common.event_queue import pushEvent
 logger = getLogger(__name__)
 
 ITEMS = {
@@ -42,13 +44,12 @@ class PlayerClass(Config):
                              'currentLevel': 'asriel_den.json',
                              'inventory': []  # Inventory stores item IDs
                          },
-                         readAll=True)
+                         readAll=True, critical=False)
 
     def giveItem(self, item_id: str) -> None:
         """Adds an item to the player's inventory if it's a valid item."""
         if item_id not in ITEMS:
             raise ValueError(f"Item with ID '{item_id}' does not exist.")
-            logger.error(f"Item '{item_id}' added to inventory.")
         if item_id not in self.config['inventory']:
             self.config['inventory'].append(item_id)
             logger.info(f"Item '{item_id}' added to inventory.")
@@ -77,6 +78,7 @@ def listSaves() -> List[str]:
             if item.is_file():
                 res.append(item.name.removesuffix(".json"))
     except Exception as e:
+        pushEvent("error", {"message": "Error: " + str(e)})
         logger.error("Listing saves failed : %s", e)
     return res
 

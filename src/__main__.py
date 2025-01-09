@@ -1,7 +1,7 @@
 '''
 Call the package directly to run it.
 '''
-from src.graphics.common import buttonAttr, buttonAttr2, niceFiller
+from src.graphics.common import buttonAttr, buttonAttr2, niceFiller, notify
 from src.graphics.settings import launchSettings
 from src.common import event_queue
 from src.globals import player
@@ -140,7 +140,13 @@ main = Main()
 mainView = MainView()
 
 
+async def errorHandler(params: dict):
+    notify(params['message'])
+
+
 async def loadMainView():
+    event_queue.registerHandler('error', errorHandler)
+
     tui_main.aloop.create_task(event_queue.loop())
     tui_main.view.bottom = niceFiller(mainView)
 tui_main.render(loadMainView, main.exit)

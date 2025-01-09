@@ -230,4 +230,5 @@ def loadLevel(filename: str, startField: int = None) -> Level:
         return lvl
     except Exception as e:
         logger.error("Loading level %s failed: %s", filename, e)
+        pushEvent("error", {"message": "Error: " + ("Loading level %s failed: %s" % (filename, e))})
         logger.debug(traceback.print_exc())
