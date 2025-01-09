@@ -294,31 +294,6 @@ class CombatEvent(GameEvent):
         return messages
 
 
-class ItemGiveEvent(GameEvent):
-    localConfig = {
-        'item_id': '',
-        'nextEvent': '',
-    }
-
-    def __init__(self, eventId: str, config: Dict[str, Any]) -> None:
-        """
-        Initialize the ItemGiveEvent.
-
-        Args:
-            eventId (str): The unique ID of the event.
-            config (Dict[str, Any]): Configuration for the event, including the item_id.
-        """
-        self.defaultConfig |= self.localConfig
-        super().__init__(eventId, config, uiEvent=True)
-
-    async def __call__(self) -> str:
-        try:
-            player.player.giveItem(self.item_id)
-        except Exception as e:
-            logger.info(e)
-        return await super().__call__()
-
-
 def eventFromDict(type: str, eventId: str, config: dict = {}):
     try:
         return eventTypes[type](eventId, config)
