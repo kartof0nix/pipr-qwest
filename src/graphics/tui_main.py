@@ -25,13 +25,15 @@ palette = [("reversed", "standout", ""),
            ("magenta","dark magenta", ""),
            ("default", "", ""),
            ("yellow", "yellow", ""),
+           ("green", "dark green", ""),
+
            ("pyellow", "yellow,bold", ""),
            ("pwhite", "white,bold", ""),
            ("hwhite", "white,bold", ""),
            ("hred", "dark red,bold", ""),
            ("hblue", "dark blue,bold", ""),
+           ("hgreen", "dark green,bold", ""),
            ("hbrown", "black", "brown"),
-           ("green", "dark green", "")
            ]
 class myOverlay(urwid.Overlay):
     def keypress(self, size, key):

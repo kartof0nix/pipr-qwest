@@ -134,7 +134,7 @@ class LevelView:
             self.last_bottom = tui_main.view.bottom
             tui_main.view.bottom = self.fabric
             overlay = overlayWidget()
-            tui_main.add_frame(overlay, overlay.getSize()[1], overlay.getSize()[0], ('left', 'top'))
+            tui_main.add_frame(overlay, width=20, height='pack', side=('left', 'top'))
             tui_main.loop.draw_screen()
             registerHandler("move", self.fabric.update)
         except Exception as e:

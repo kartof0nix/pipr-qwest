@@ -296,7 +296,6 @@ class itemSquare(item):
                 else: break
             if(not self.is_empty(poz,  (dec_x, dec_y), out)):
                 logger.info("Field %s could not draw decoration %s", self.field.num, dec)
-            logger.info("dec %s, %s, %s", item_size, poz, (dec_x, dec_y))
             dec.apply(poz, (dec_x, dec_y), out, style)
         return (out, style)
 

@@ -145,7 +145,9 @@ class Level:
         cur = player.player['currentField']
         res = fields.fields[cur].move(direction)
         if(res == False): return False
-        if(fields.fields[res].blocked): return False
+        if(fields.fields[res].blocked):
+            return False
+        player.player['previousField'] = cur
         fields.fields[cur].exit()
         player.player['currentField'] = res
         pushEvent("move", {"src" : cur, "dest":res})

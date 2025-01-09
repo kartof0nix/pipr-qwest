@@ -1,6 +1,7 @@
 '''Common event queue for all game events. Modules may push and listen for events.'''
 
 from asyncio import Queue
+import asyncio
 from src.graphics import tui_main
 import logging
 logger = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ async def loop():
         logger.info("Event %s, %s", ev, par)
         if(ev in registered):
             for f in registered[ev]:
-                tui_main.aloop.create_task(f(par))
+                asyncio.create_task(f(par))
     
     
     

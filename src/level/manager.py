@@ -4,7 +4,7 @@ from src.graphics import tui_main
 from src.level.game import Field, Level, loadLevel, LEVEL_PATH
 from src.level.graphics import LevelView
 from src.common import event_queue
-from src.events.game import changeLevelEvent
+from src.events.game import ChangeLevelEvent
 from src.globals import player
 
 import asyncio
@@ -61,7 +61,7 @@ class LevelManagerClass:
         return res
     async def changeLevelListener(self, params:dict):
         event = params['event']
-        if(isinstance(event, changeLevelEvent)):
+        if(isinstance(event, ChangeLevelEvent)):
             await self._changeLevel(event.nextLevel, event.nextField)
     async def gameOverListener(self, params:dict):
         self.delLevel()
