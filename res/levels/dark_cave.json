@@ -1,0 +1,70 @@
+{
+    "name": "dark_cave.json",
+    "events": [
+        {
+            "eventType": "CombatEvent",
+            "eventId": "bearAttack",
+            "params": {
+                "name":"bear",
+                "opponentHealth": 60,
+                "opponentAttack": 10,
+                "opponentDefense": 5,
+                "nextEvent": "bearDefeated",
+                "eventFlee": "moveBack"
+            }
+        },
+        {
+            "eventType": "ConversationEvent",
+            "eventId": "bearDefeated",
+            "params": {
+                "dialogue": [
+                    [
+                        "narrator",
+                        "You defeated the bear and cleared the path ahead."
+                    ]
+                ]
+            }
+        },
+        {
+            "eventType": "ItemGiveEvent",
+            "eventId": "findTorch",
+            "params": {
+                "item_id": "torch"
+            }
+        },
+        {
+            "eventType": "ChangeLevelEvent",
+            "eventId": "exitCave",
+            "params": {
+                "nextLevel": "castle_gate.json",
+                "nextField": 1
+            }
+        }
+    ],
+    "grid": [
+        [1, 2],
+        [3, 4]
+    ],
+    "graph": [
+        [1, 2], [2, 4], [4, 3]
+    ],
+    "startField": 1,
+    "fields": {
+        "1": {
+            "_decorations": ["stalagmites"]
+        },
+        "2": {
+            "eventOnEnter": "bearAttack"
+        },
+        "3": {
+            "eventOnInspect": "findTorch",
+            "decorations": ["item"]
+
+        },
+        "4": {
+            "eventOnInspect": "exitCave",
+            "decorations": ["door"]
+
+        }
+    }
+}

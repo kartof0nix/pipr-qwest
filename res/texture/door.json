@@ -1,9 +1,7 @@
 {
     "attrmap":{
-        "r":"hred",
-        "b":"hblue",
         "w":"hwhite",
-        "d":"hbrown"
+        "d":"brown"
     },
     "textutes" : {
         "1x2": [["🚪 "], ["ww"]],
