@@ -233,21 +233,3 @@ Transitions to a new level.
         }
     ]
 }
-```
-
----
-
-## **Best Practices**
-
-1. **Ensure Adjacency in the `graph` Section**:
-   - Fields can only connect if they are adjacent in the grid.
-
-2. **Unique Event IDs**:
-   - Each event must have a unique `eventId`.
-
-3. **Avoid Unreachable Fields**:
-   - Ensure all fields in the grid are accessible through the `graph`.
-
-4. **Test Field Events**:
-   - Verify that all events are properly linked and trigger as expected during gameplay.
-
