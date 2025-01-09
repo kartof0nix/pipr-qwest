@@ -112,7 +112,7 @@ class Setting(Config):
         if name not in self.config:
             raise KeyError(f"Config item '{name}' not found.")
 
-        if isinstance(value, self.constrains[name]['type']):
+        if not isinstance(value, self.constrains[name]['type']):
             raise TypeError(f"Type '{type(value)}' does not match {
                             name}'s type {self.constrains[name]['type']}")
 

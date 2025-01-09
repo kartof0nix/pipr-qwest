@@ -27,8 +27,8 @@ AIM = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 cfg = Setting(
     name="Level graphics",
     defaultValues={
-        "anim speed": 1.0,
-        "theme": "default"
+        "anim speed": 0.3,
+        "theme": "forest"
     },
     constrains={
         "anim speed": {

@@ -133,10 +133,6 @@ class ConversationEventTUI(GameEventTUI):
 
     def makeWidget(self):
         (character, text) = self.event.currentLine()
-        self.y = 0
-        for it in self.event.dialogue:
-            self.y = max(self.y, len(it[0]), len(it[1]))
-        self.x = 3
         return urwid.Pile([urwid.Text(('magenta', character + ":")), (urwid.Text(('cyan', text))), urwid.Filler(buttonAttr(urwid.Button("Next", self.keypress)))])
 
     # logger.info("UwuSync Sleeping")
@@ -152,13 +148,10 @@ class ConversationEventTUI(GameEventTUI):
         return key
 
     def __enter__(self):
-        logger.info("Entering TUI!")
-        (character, text) = self.event.currentLine()
-        # tui_main.aloop.create_task(self.tui_loop())
         self.widget = urwid.WidgetPlaceholder(self.makeWidget())
         self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, self.y + 5, self.x,
-                           'bottom', 'Conversation', True)
+        tui_main.add_frame(self.widget, width=('relative', 70), height='pack',
+                           side='bottom', title='Conversation', block_move=True)
         pass
 
     def __exit__(self, exc_type, exc_value, traceback):

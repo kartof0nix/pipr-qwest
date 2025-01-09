@@ -181,8 +181,7 @@ def render(callback, exitFunction):
 
     loop = urwid.MainLoop(view, palette=palette, event_loop=ev_loop)
     view.exit = exitFunction
-    loop.screen.set_terminal_properties(colors=2 * 24)
-    # self.draw_main()
+    loop.screen.set_terminal_properties(colors=2 ** 24)
     aloop.create_task(callback())
     loop.run()
 
