@@ -10,6 +10,12 @@ Pipr Qwest is a dynamic, text-based RPG game that combines strategic decision-ma
 
 ## **Installation**
 
+
+### Prequisites
+This project can only run on Linux / Mac.
+To run this project python>=3.12 needs to be installed.
+If you wish to run on windows, use WSL.
+
 Follow these steps to install and run the game:
 
 1. **Download the Source Code**  
@@ -31,11 +37,6 @@ Follow these steps to install and run the game:
      ```bash
      source pipr-qwest-env/bin/activate
      ```
-   - On Windows:
-     ```bash
-     pipr-qwest-env\Scripts\activate
-     ```
-
 5. **Run the Game**  
    Launch the game by running the `src` module:
    ```bash
@@ -97,4 +98,11 @@ This project is open-source. Please refer to the `LICENSE` file in the repositor
 
 ---
 
-Enjoy your journey through Pipr Qwest!
+## Modding
+Simple modding is supported via adding files to the 'mod' folder. Currently it is impossible to overrite the behaviour of the game, but you may add your own:
+
+### GameEvents and GameEventTUI - [documentation](/doc/events/game.md)
+You can achieve this by inhereting from the GameEvent and GameEvent TUI classes. The newly defined Events should become available in the level.json file
+
+### Act upon game events
+By registering a listener to the [event queue](/doc/common/event_queue.md) you can act upon various events in the game. The newly launched functions are asynchronous, so you may use this to 'launch' your modpack to add new functionality.

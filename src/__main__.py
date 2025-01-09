@@ -12,6 +12,7 @@ import urwid
 from pathlib import Path
 import logging
 from typing import List
+from mod import *
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='qwest.log',
