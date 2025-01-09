@@ -26,7 +26,8 @@ A config class should be generated once for each module that needs it - with ini
 class Config:
     CONFIG_PATH=Path("~/.pipr-qwest/config").expanduser()
 
-    def __init__(self, filename, defaultValues : Dict[str, Any] = {}, readAll=False):
+    def __init__(self, filename, defaultValues : Dict[str, Any] = {}, readAll=False, critical=True):
+        self.critical=critical
         self.readAll = readAll
         self.name = filename 
         if(not self.CONFIG_PATH.exists()): 
@@ -79,8 +80,9 @@ class Config:
                 data = json.load(f)
             self.from_dict(data)
         except Exception as e:
-            logger.error("Failed to load file: %s", e)
-            logger.debug("Failed to load file: %s", traceback.format_exc())
+            if(self.critical):
+                logger.error("Failed to load file: %s", e)
+                logger.debug("Failed to load file: %s", traceback.format_exc())
 
     # Subscription support
     def __getitem__(self, key: str) -> Any:

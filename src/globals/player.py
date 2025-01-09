@@ -17,7 +17,7 @@ ITEMS = {
     "greatsword": {"item_id": "greatsword", "display_name": "Greatsword", "attack": 20, "defense": 5},
     "longbow": {"item_id": "longbow", "display_name": "Longbow", "attack": 15, "defense": 3},
     "battle_axe": {"item_id": "battle_axe", "display_name": "Battle Axe", "attack": 18, "defense": 4},
-    "magic_staff": {"item_id": "magic_staff", "display_name": "Magic Staff", "attack": 12, "defense": 8},
+    "magic_staff": {"item_id": "magic_staff", "display_name": "Magic Staff", "attack": 16, "defense": 9},
     "iron_shield": {"item_id": "iron_shield", "display_name": "Iron Shield", "attack": 1, "defense": 20},
     "plate_armor": {"item_id": "plate_armor", "display_name": "Plate Armor", "attack": 0, "defense": 25},
     "chainmail": {"item_id": "chainmail", "display_name": "Chainmail", "attack": 0, "defense": 15},

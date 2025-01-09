@@ -239,6 +239,7 @@ class itemSquare(item):
         self.bg_style=["magenta", "cyan", "default"][self.seed%3]
         self.fg_style=["magenta", "cyan", "default"][(self.seed+1)%3]
         self.decorations = list(self.field.decorations)
+        self.surround = []
         self.update()
         self.field.updateCallback = self.update
         
@@ -265,6 +266,12 @@ class itemSquare(item):
                 if(char[i][j] != self.bg):
                     return False
         return True
+    def is_path(self, poz:Tuple[int, int], size:Tuple[int, int], char:List[List[str]]):
+        for i in range(poz[0], poz[0]+size[0]):
+            for j in range(poz[1], poz[1]+size[1]):
+                if(char[i][j] != self.fg):
+                    return False
+        return True
     
     def sketch(self, item_size:Tuple[int, int]):
         if(self.cache != None and self.cacheSize == item_size):
@@ -286,6 +293,20 @@ class itemSquare(item):
 
         # Apply decorations
         for it in self.decorations:
+            dec = texture(it+".json")
+            (dec_x, dec_y) = dec.getSize(max_size)
+            poz = (rnd.randint(0, x-dec_x), rnd.randint(0, y-dec_y))
+            for i in range(100):
+                # logger.info("Checking poz=%s, dec=%s, grid=%s", poz, (dec_x, dec_y), item_size)
+                if(not self.is_path(poz, (dec_x, dec_y), out)):
+                    poz = (rnd.randint(0, x-dec_x), rnd.randint(0, y-dec_y))
+                else: break
+            if(not self.is_empty(poz,  (dec_x, dec_y), out)):
+                logger.info("Field %s could not draw decoration %s", self.field.num, dec)
+            dec.apply(poz, (dec_x, dec_y), out, style)
+            
+        # Apply surround
+        for it in self.surround:
             dec = texture(it+".json")
             (dec_x, dec_y) = dec.getSize(max_size)
             poz = (rnd.randint(0, x-dec_x), rnd.randint(0, y-dec_y))
@@ -318,9 +339,9 @@ class itemSquareForest(itemSquare):
         dec_size = dec.getSize(max_size)
         max_deco = (6*max_size[0]*max_size[1]) // int((dec_size[0]*dec_size[1])**(1.2))
         now_deco = rnd.randint(1, max_deco)
-        self.decorations += ["tree"]*now_deco
+        self.surround += ["tree"]*now_deco
         (out, style) = super()._sketch(item_size)
-        self.decorations = self.decorations[:-now_deco]
+        self.surround = self.surround[:-now_deco]
         
         return (out, style)
     @property

@@ -182,6 +182,7 @@ class ChangeLevelEvent(GameEvent):
 
 class CombatEvent(GameEvent):
     localConfig = {
+        'name': "",
         'opponentHealth': 100,
         'opponentAttack': 10,
         'opponentDefense': 5,
@@ -231,6 +232,7 @@ class CombatEvent(GameEvent):
         return f"The opponent dealt {damage} damage. Your health is now {player.player['health']}."
 
     async def __call__(self) -> str:
+        self.fled=False
         """
         Loop until the combat ends. Returns nextEvent if combat ends normally.
         """

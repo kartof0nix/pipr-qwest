@@ -26,6 +26,7 @@ palette = [("reversed", "standout", ""),
            ("default", "", ""),
            ("yellow", "yellow", ""),
            ("green", "dark green", ""),
+           ("brown", "brown", ""),
 
            ("pyellow", "yellow,bold", ""),
            ("pwhite", "white,bold", ""),
@@ -143,6 +144,7 @@ def get_frame():
     return view.get_top().original_widget.original_widget.original_widget.original_widget
 
 def rem_frame():
+    logger.info("Remove frame.")
     view.pop_top()
     
 

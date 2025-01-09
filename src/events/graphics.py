@@ -187,8 +187,6 @@ class CombatEventTUI(GameEventTUI):
         self.update_message("\n".join(messages))  # Display all resulting messages
 
         # Check if the event is complete and close the TUI if so
-        if self.event.complete.is_set():
-            self.exit_tui()
 
     def redraw(self) -> None:
         """
@@ -196,20 +194,13 @@ class CombatEventTUI(GameEventTUI):
         """
         tui_main.loop.draw_screen()
 
-    def exit_tui(self) -> None:
-        """
-        Exit the TUI gracefully when the event is complete.
-        """
-        logger.info("Exiting CombatEventTUI.")
-        self.__exit__(None, None, None)
-
     def __enter__(self) -> "CombatEventTUI":
         """
         Set up the TUI when entering the context.
         """
         logger.info("Entering CombatEventTUI context.")
         self.widget = urwid.WidgetPlaceholder(self.makeWidget())
-        tui_main.add_frame(self.widget, width=('relative', 70), height='pack', side=('center', 'middle'), title='Combat', block_move=True)
+        tui_main.add_frame(self.widget, width=('relative', 70), height='pack', side=('center', 'middle'), title='Combat with %s'%(self.event.name), block_move=True)
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

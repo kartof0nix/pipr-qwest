@@ -40,7 +40,8 @@ class Field:
             'decorations' : [],
             'obstacles' : [],
             'blocked' : False
-            } | attr
+            } | attr,
+            critical=False
         )
     @property
     def blocked(self):
