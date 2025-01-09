@@ -3,7 +3,7 @@ from src.globals.template import ev_template, boolEval, autoEval
 
 def test_template():
     # removeSave("test")
-    player = PlayerClass("test.json")
+    player = PlayerClass("pytest.json")
 
     # Give items to the player
     player.giveItem("sword")

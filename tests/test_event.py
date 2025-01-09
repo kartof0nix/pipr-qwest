@@ -1,7 +1,7 @@
-from src.events import registeredEvents, GameEvent, IfEvent, ConversationEvent, menuEvent, eventFromDict
-from src.globals import player
-import pytest
-import logging
+# from src.events import registeredEvents, GameEvent, IfEvent, ConversationEvent, MenuEvent, eventFromDict
+# from src.globals import player
+# import pytest
+# import logging
 
 
 # def test_nextEvent():
