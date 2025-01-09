@@ -28,19 +28,22 @@ ITEMS = {
 }
 
 """Define a universal player.player (save) class since multiple saves are possible"""
+
+
 class PlayerClass(Config):
-    CONFIG_PATH=Path("~/.pipr-qwest/saves").expanduser()
+    CONFIG_PATH = Path("~/.pipr-qwest/saves").expanduser()
+
     def __init__(self, filename):
         super().__init__(filename,
-        {
-            'health': 100,
-            'armor': 0,
-            'attack': 1,
-            'currentLevel':'asriel_den.json',
-            'inventory': []  # Inventory stores item IDs
-        },
-        readAll=True)
-        
+                         {
+                             'health': 100,
+                             'armor': 0,
+                             'attack': 1,
+                             'currentLevel': 'asriel_den.json',
+                             'inventory': []  # Inventory stores item IDs
+                         },
+                         readAll=True)
+
     def giveItem(self, item_id: str) -> None:
         """Adds an item to the player's inventory if it's a valid item."""
         if item_id not in ITEMS:
@@ -77,16 +80,16 @@ def listSaves() -> List[str]:
         logger.error("Listing saves failed : %s", e)
     return res
 
-def removeSave(save:str):
+
+def removeSave(save: str):
     try:
         saveFile = save + ".json"
         Path(PlayerClass.CONFIG_PATH).joinpath(saveFile).unlink()
-        shutil.rmtree(Path(PlayerClass.CONFIG_PATH).joinpath(save).absolute() )
-    except:
-        logger.info("Deleting saves failed, hopefully they gone now")
-    
-def loadSave(save:str):
+        shutil.rmtree(Path(PlayerClass.CONFIG_PATH).joinpath(save).absolute())
+    except Exception as e:
+        logger.info("Deleting saves failed: %s", e)
+
+
+def loadSave(save: str):
     global player
     player = PlayerClass(save + ".json")
-    
-    

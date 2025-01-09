@@ -7,29 +7,33 @@ import logging
 logger = logging.getLogger(__name__)
 
 q = Queue()
-def pushEvent(event : str, params:dict = {}):
+
+
+def pushEvent(event: str, params: dict = {}):
     q.put_nowait((event, params))
 
-registered={}
-def registerHandler(event:str, func):
+
+registered = {}
+
+
+def registerHandler(event: str, func):
     if event not in registered:
         registered[event] = []
     registered[event] += [func]
-    
-def unregisterHandler(event:str, func):
+
+
+def unregisterHandler(event: str, func):
     try:
         registered[event].pop(registered[event].index(func))
     except Exception as e:
-        logger.info("Attemptet to pop function from listers, but it already has no listeners : %s", e)
-    
+        logger.info(
+            "Attemptet to pop function from listers, but it already has no listeners : %s", e)
+
+
 async def loop():
-    while(True):
+    while (True):
         (ev, par) = await q.get()
         logger.info("Event %s, %s", ev, par)
-        if(ev in registered):
+        if (ev in registered):
             for f in registered[ev]:
                 asyncio.create_task(f(par))
-    
-    
-    
-    

@@ -32,23 +32,25 @@ class GameEvent(metaclass=RegisterEventMeta):
         "nextEvent": "",
         "assignValues": []
     }
-    def __init__(self, eventId, config: dict,  uiEvent:bool=False):
+
+    def __init__(self, eventId, config: dict, uiEvent: bool = False):
         global registeredEvents
         registeredEvents |= {eventId: self}
         self.eventId = eventId
         self.uiEvent = uiEvent
         for key in self.defaultConfig:
-            self.__dict__[key] = config[key] if key in config else self.defaultConfig[key]
-        if(uiEvent):
+            self.__dict__[
+                key] = config[key] if key in config else self.defaultConfig[key]
+        if (uiEvent):
             self.complete = asyncio.Event()
 
     async def __call__(self) -> str:
-        
-        pushEvent("event_start", {"event":self})
-        if(self.uiEvent):
+
+        pushEvent("event_start", {"event": self})
+        if (self.uiEvent):
             await self.complete.wait()
             self.complete.clear()
-        pushEvent("event_end", {"event":self})
+        pushEvent("event_end", {"event": self})
         # logger.info("Len: %s, %d", self.eventId,  len(self.assignValues))
         for (key, template) in self.assignValues:
             setValue(key, ev_template(template))
@@ -68,12 +70,13 @@ class IfEvent(GameEvent):
 
     async def __call__(self, *args, **kwds) -> str:
         await super().__call__()
-        if(boolEval(self.condition)):
+        if (boolEval(self.condition)):
             return self.eventIdTrue
         else:
             return self.eventIdFalse
         pass
-    
+
+
 class MoveBackEvent(GameEvent):
     """Event to move the player back to the previous field."""
     localConfig = {
@@ -86,7 +89,7 @@ class MoveBackEvent(GameEvent):
         super().__init__(eventId, config)
 
     async def __call__(self):
-        res = await super().__call__()
+        await super().__call__()
         player.player['currentField'] = player.player['previousField']
         pushEvent("move")
         return self.nextEvent
@@ -101,13 +104,15 @@ class DamageEvent(GameEvent):
 
     def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
-        if('assignValues' not in config): config['assignValues'] = []
-        config['assignValues'] += [('player.health', "{{ player['health']- %s}}" % (config['hp']))]
-        super().__init__(eventId, config,  True)
+        if ('assignValues' not in config):
+            config['assignValues'] = []
+        config['assignValues'] += [('player.health',
+                                    "{{ player['health']- %s}}" % (config['hp']))]
+        super().__init__(eventId, config, True)
 
     async def __call__(self):
         res = await super().__call__()
-        if(player.player['health'] <= 0):
+        if (player.player['health'] <= 0):
             pushEvent('gameover')
         return res
 
@@ -131,7 +136,8 @@ class MenuEvent(GameEvent):
             self.selection = entryId
             self.complete.set()  # Mark the event as complete
         else:
-            raise ValueError(f"Invalid selection {entryId}. Must be within the range of entryList.")
+            raise ValueError(f"Invalid selection {
+                             entryId}. Must be within the range of entryList.")
 
     async def __call__(self) -> str:
         """
@@ -139,6 +145,7 @@ class MenuEvent(GameEvent):
         """
         await super().__call__()  # Wait for the TUI to signal completion
         return self.eventList[self.selection]
+
 
 class ConversationEvent(GameEvent):
     localConfig = {
@@ -149,18 +156,21 @@ class ConversationEvent(GameEvent):
     def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
         self.current = 0
-        super().__init__(eventId, config,  uiEvent=True)
+        super().__init__(eventId, config, uiEvent=True)
 
     def currentLine(self) -> Tuple[str, str]:
         return self.dialogue[self.current]
+
     def nextLine(self) -> Tuple[str, str]:
         self.current += 1
-        if(self.current >= len(self.dialogue)): self.complete.set()
+        if (self.current >= len(self.dialogue)):
+            self.complete.set()
 
     async def __call__(self):
         res = await super().__call__()
         self.current = 0
         return res
+
 
 class ChangeLevelEvent(GameEvent):
     localConfig = {
@@ -171,7 +181,7 @@ class ChangeLevelEvent(GameEvent):
 
     def __init__(self, eventId: str, config: dict):
         self.defaultConfig |= self.localConfig
-        super().__init__(eventId, config,  uiEvent=True)
+        super().__init__(eventId, config, uiEvent=True)
 
     async def __call__(self):
         res = await super().__call__()
@@ -179,6 +189,7 @@ class ChangeLevelEvent(GameEvent):
         Level manager should listen for this event to hanndle changing thy level'''
         # LevelManager.changeLevel(self.nextLevel, self.nextField)
         return res
+
 
 class CombatEvent(GameEvent):
     localConfig = {
@@ -206,14 +217,16 @@ class CombatEvent(GameEvent):
 
     def player_attack(self) -> str:
         """Player attacks the opponent."""
-        damage = max(1, random.randint(player.player.calcAttack() - 5, player.player.calcAttack() + 5) - self.opponentDefense)
+        damage = max(1, random.randint(player.player.calcAttack() - 5,
+                     player.player.calcAttack() + 5) - self.opponentDefense)
         self.opponentHealth = max(0, self.opponentHealth - damage)
         return f"You dealt {damage} damage to the opponent. Opponent's health is now {self.opponentHealth}."
 
     def player_brace(self) -> str:
         """Player braces for the next attack."""
-        player.player.set_value('health', min(100, player.player['health'] + self.playerHealAmount))
-        self.playerHealAmount = max(1, self.playerHealAmount-5)
+        player.player.set_value('health', min(
+            100, player.player['health'] + self.playerHealAmount))
+        self.playerHealAmount = max(1, self.playerHealAmount - 5)
         return f"You brace, increasing defense and healing for {self.playerHealAmount} health.\n-->The combat tires you. Your next brace will be weaker."
 
     def player_flee(self) -> str:
@@ -224,15 +237,17 @@ class CombatEvent(GameEvent):
 
     def opponent_attack(self) -> str:
         """Opponent attacks the player.player."""
-        damage = max(1, random.randint(self.opponentAttack - 5, self.opponentAttack + 5) - player.player.calcDefense())
-        player.player.set_value('health', max(0, player.player['health'] - damage))
+        damage = max(1, random.randint(self.opponentAttack - 5,
+                     self.opponentAttack + 5) - player.player.calcDefense())
+        player.player.set_value('health', max(
+            0, player.player['health'] - damage))
         if player.player['health'] <= 0:
             pushEvent("gameover")
             return "The opponent defeated you. Game over!"
         return f"The opponent dealt {damage} damage. Your health is now {player.player['health']}."
 
     async def __call__(self) -> str:
-        self.fled=False
+        self.fled = False
         """
         Loop until the combat ends. Returns nextEvent if combat ends normally.
         """
@@ -241,6 +256,7 @@ class CombatEvent(GameEvent):
         #         self.complete.set()
         await super().__call__()
         return self.eventFlee if self.fled else self.nextEvent
+
     def action(self, action: Literal['attack', 'brace', 'flee']) -> List[str]:
         """
         Simulates a full combat round based on the player.player's chosen action.
@@ -287,14 +303,13 @@ class ItemGiveEvent(GameEvent):
     def __init__(self, eventId: str, config: Dict[str, Any]) -> None:
         """
         Initialize the ItemGiveEvent.
-        
+
         Args:
             eventId (str): The unique ID of the event.
             config (Dict[str, Any]): Configuration for the event, including the item_id.
         """
         self.defaultConfig |= self.localConfig
         super().__init__(eventId, config, uiEvent=True)
-
 
     async def __call__(self) -> str:
         try:
@@ -303,14 +318,12 @@ class ItemGiveEvent(GameEvent):
             logger.info(e)
         return await super().__call__()
 
-        
-def eventFromDict(type: str, eventId: str,  config: dict = {}):
+
+def eventFromDict(type: str, eventId: str, config: dict = {}):
     try:
         return eventTypes[type](eventId, config)
     except KeyError as e:
-        logger.error("Event type '%s' undefined", type)
+        logger.error("Event type '%s' undefined (%s)", type, e)
         # Return dummy event as quick-fix
         return GameEvent(eventId, config)
 # e = changeLevelEvent()
-
-        return self.escapeEvent

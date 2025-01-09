@@ -26,36 +26,46 @@ class RegisterEventTUIMeta(type):
 
 class GameEventTUI(metaclass=RegisterEventTUIMeta):
     """Base class for event's TUI. Every instance of any child class registers the instance"""
-    def __init__(self, event : GameEvent):
+
+    def __init__(self, event: GameEvent):
         self.event = event
 
     def __enter__(self) -> str:
         pass
+
     def __exit__(self, exc_type, exc_value, traceback):
         pass
 
+
 class NotifyEventTUI(GameEventTUI):
     def __enter__(self):
-        tui_main.add_frame(notificationWidget(self.text, self.event.complete.set), len(self.text)+10, 3, ('center', 'middle'), 'Notification', True)
+        tui_main.add_frame(notificationWidget(self.text, self.event.complete.set), len(
+            self.text) + 10, 3, ('center', 'middle'), 'Notification', True)
         pass
+
     def __exit__(self, exc_type, exc_value, traceback):
         tui_main.rem_frame()
         pass
 
+
 class DamageEventTUI(NotifyEventTUI):
-    def __init__(self, event : DamageEvent):
+    def __init__(self, event: DamageEvent):
         super().__init__(event)
         self.text = f"You have been dealt {self.event.hp} damage!"
 
+
 class ChangeLevelEventTUI(NotifyEventTUI):
-    def __init__(self, event : DamageEvent):
+    def __init__(self, event: DamageEvent):
         super().__init__(event)
-        self.text = f"You have found a passage to {self.event.nextLevel.removesuffix(".json").replace('_', ' ').capitalize()}"
+        self.text = f"You have found a passage to {
+            self.event.nextLevel.removesuffix(".json").replace('_', ' ').capitalize()}"
+
 
 class ItemGiveEventTUI(NotifyEventTUI):
-    def __init__(self, event : DamageEvent):
+    def __init__(self, event: DamageEvent):
         super().__init__(event)
-        self.text = f"You got a {self.event.item_id.replace('_', ' ').capitalize()}"
+        self.text = f"You got a {
+            self.event.item_id.replace('_', ' ').capitalize()}"
 # class DamageEvent(GameEvent):
 #     localConfig = {
 #         'health': 0,
@@ -68,6 +78,7 @@ class ItemGiveEventTUI(NotifyEventTUI):
 
 #     def __call__(self):
 #         return super().__call__()
+
 
 class MenuEventTUI(GameEventTUI):
     def itemChosen(self, button: urwid.Button):
@@ -86,11 +97,13 @@ class MenuEventTUI(GameEventTUI):
 
     def __enter__(self):
         logger.info("Entering TUI!")
-        self.widget=urwid.WidgetPlaceholder(self.makeWidget())
+        self.widget = urwid.WidgetPlaceholder(self.makeWidget())
 
         # self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, self.y+10, self.x, 'bottom', 'Choice', True)
+        tui_main.add_frame(self.widget, self.y + 10,
+                           self.x, 'bottom', 'Choice', True)
         pass
+
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")
         tui_main.rem_frame()
@@ -123,30 +136,35 @@ class ConversationEventTUI(GameEventTUI):
         self.y = 0
         for it in self.event.dialogue:
             self.y = max(self.y, len(it[0]), len(it[1]))
-        self.x=3
-        return urwid.Pile([urwid.Text(('magenta', character+":")), (urwid.Text(('cyan', text))), urwid.Filler(buttonAttr(urwid.Button("Next", self.keypress )))])
-    def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:    #         logger.info("UwuSync Sleeping")
-        if(key in [" ", "enter"]):
+        self.x = 3
+        return urwid.Pile([urwid.Text(('magenta', character + ":")), (urwid.Text(('cyan', text))), urwid.Filler(buttonAttr(urwid.Button("Next", self.keypress)))])
+
+    # logger.info("UwuSync Sleeping")
+    def keypress(self, size: tuple[int, int] = None, key: str = None) -> str | None:
+        if (key in [" ", "enter"]):
             self.event.nextLine()
-            if not(self.event.complete.is_set()):
+            if not (self.event.complete.is_set()):
                 self.widget.original_widget = self.makeWidget()
                 tui_main.loop.draw_screen()
             return None
-        if(key in ['up', 'down', 'left', 'right']): return None
+        if (key in ['up', 'down', 'left', 'right']):
+            return None
         return key
+
     def __enter__(self):
         logger.info("Entering TUI!")
         (character, text) = self.event.currentLine()
         # tui_main.aloop.create_task(self.tui_loop())
-        self.widget=urwid.WidgetPlaceholder(self.makeWidget())
+        self.widget = urwid.WidgetPlaceholder(self.makeWidget())
         self.widget.keypress = self.keypress
-        tui_main.add_frame(self.widget, self.y+5, self.x, 'bottom', 'Conversation', True)
+        tui_main.add_frame(self.widget, self.y + 5, self.x,
+                           'bottom', 'Conversation', True)
         pass
+
     def __exit__(self, exc_type, exc_value, traceback):
         logger.info("Exitting TUI!")
         tui_main.rem_frame()
         pass
-
 
 
 class CombatEventTUI(GameEventTUI):
@@ -169,12 +187,16 @@ class CombatEventTUI(GameEventTUI):
         the player's health, and available actions.
         """
         pile = [
-            urwid.Text(('magenta', f"Opponent Health: {self.event.opponentHealth}")),
+            urwid.Text(('magenta', f"Opponent Health: {
+                       self.event.opponentHealth}")),
             urwid.Text(('cyan', f"Your Health: {player.player['health']}")),
             urwid.Text(('yellow', self.message)),
-            buttonAttr(urwid.Button("Attack", on_press=lambda _: self.choose_action("attack"))),
-            buttonAttr(urwid.Button("Brace", on_press=lambda _: self.choose_action("brace"))),
-            buttonAttr(urwid.Button("Flee", on_press=lambda _: self.choose_action("flee"))),
+            buttonAttr(urwid.Button(
+                "Attack", on_press=lambda _: self.choose_action("attack"))),
+            buttonAttr(urwid.Button(
+                "Brace", on_press=lambda _: self.choose_action("brace"))),
+            buttonAttr(urwid.Button(
+                "Flee", on_press=lambda _: self.choose_action("flee"))),
         ]
         return urwid.Pile(pile)
 
@@ -182,9 +204,11 @@ class CombatEventTUI(GameEventTUI):
         """
         Handle the player's action and update the TUI with the results.
         """
-        messages = self.event.action(action)  # Use the `action` method from CombatEvent
+        messages = self.event.action(
+            action)  # Use the `action` method from CombatEvent
         logger.info("Update combat with %s", messages)
-        self.update_message("\n".join(messages))  # Display all resulting messages
+        # Display all resulting messages
+        self.update_message("\n".join(messages))
 
         # Check if the event is complete and close the TUI if so
 
@@ -200,7 +224,8 @@ class CombatEventTUI(GameEventTUI):
         """
         logger.info("Entering CombatEventTUI context.")
         self.widget = urwid.WidgetPlaceholder(self.makeWidget())
-        tui_main.add_frame(self.widget, width=('relative', 70), height='pack', side=('center', 'middle'), title='Combat with %s'%(self.event.name), block_move=True)
+        tui_main.add_frame(self.widget, width=('relative', 70), height='pack', side=(
+            'center', 'middle'), title='Combat with %s' % (self.event.name), block_move=True)
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

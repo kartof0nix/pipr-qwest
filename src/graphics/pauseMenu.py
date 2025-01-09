@@ -14,38 +14,44 @@ from src.common import event_queue
 import logging
 logger = logging.getLogger(__name__)
 
+
 def saveGame():
     player.player.save_to_file()
     for field in fields.fields:
         fields.fields[field].attr.save_to_file()
-    
-            
+
+
 class PauseMenu(urwid.Pile):
-    def saveButton(self, butt : urwid.Button):
+    def saveButton(self, butt: urwid.Button):
         saveGame()
         notify("Game saved!")
-    def saveAndExitButton(self, butt : urwid.Button):
+
+    def saveAndExitButton(self, butt: urwid.Button):
         saveGame()
         event_queue.pushEvent("gameover")
-    def exitButton(self, butt : urwid.Button):
+
+    def exitButton(self, butt: urwid.Button):
         event_queue.pushEvent("gameover")
-    def settingsButton(self, butt : urwid.Button):
+
+    def settingsButton(self, butt: urwid.Button):
         asyncio.create_task(launchSettings())
-    def unpauseButton(self, butt : urwid.Button=None):
+
+    def unpauseButton(self, butt: urwid.Button = None):
         tui_main.rem_frame()
-    
+
         # asyncio.create_task(launchSettings())
     def keypress(self, size, key):
-        if(key == 'esc'):
+        if (key == 'esc'):
             self.unpauseButton()
         else:
             return super().keypress(size, key)
+
     def __init__(self):
         menu = [
-            buttonAttr(urwid.Button("Save game", self.saveButton )),
-            buttonAttr(urwid.Button("Save and exit", self.saveAndExitButton )),
-            buttonAttr(urwid.Button("Exit without saving", self.exitButton )),
+            buttonAttr(urwid.Button("Save game", self.saveButton)),
+            buttonAttr(urwid.Button("Save and exit", self.saveAndExitButton)),
+            buttonAttr(urwid.Button("Exit without saving", self.exitButton)),
             # buttonAttr(urwid.Button("Settings", self.settingsButton )),
-            buttonAttr(urwid.Button("Unpause", self.unpauseButton ))
+            buttonAttr(urwid.Button("Unpause", self.unpauseButton))
         ]
         super().__init__(menu)

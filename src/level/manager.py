@@ -12,20 +12,23 @@ import logging
 import traceback
 logger = logging.getLogger(__name__)
 
+
 class LevelManagerClass:
     lvl = None
     # view = None
+
     def __init__(self):
         self.exitEvent = asyncio.Event()
         event_queue.registerHandler("event_end", self.changeLevelListener)
         event_queue.registerHandler("gameover", self.gameOverListener)
-    def callLevel(self, filename : str, startField=None):
+
+    def callLevel(self, filename: str, startField=None):
         asyncio.create_task(self._callLevel(filename, startField=startField))
 
-    async def _callLevel(self, filename : str, startField=None) -> Level:
+    async def _callLevel(self, filename: str, startField=None) -> Level:
         try:
             self.lvl = loadLevel(filename, startField=startField)
-            with LevelView(self.lvl) as l:
+            with LevelView(self.lvl):
                 await self.exitEvent.wait()
             logger.info("Closing level %s", self.lvl.name)
             self.exitEvent.clear()
@@ -37,16 +40,17 @@ class LevelManagerClass:
         self.exitEvent.set()
         self.lvl.exit()
         tui_main.loop.draw_screen()
-        
-    
-    async def _changeLevel(self, nextLevel : str, nextField:int = None):
+
+    async def _changeLevel(self, nextLevel: str, nextField: int = None):
         player.player['currentLevel'] = nextLevel
         self.delLevel()
         while self.exitEvent.is_set():
             await asyncio.sleep(0.1)
         await self._callLevel(nextLevel, startField=nextField)
-    def changeLevel(self, nextLevel : str, nextField:int = None):
-        asyncio.create_task(self._changeLevel(nextLevel=nextLevel, nextField=nextField))
+
+    def changeLevel(self, nextLevel: str, nextField: int = None):
+        asyncio.create_task(self._changeLevel(
+            nextLevel=nextLevel, nextField=nextField))
 
     def listLevels(self) -> List[str]:
         res = []
@@ -59,16 +63,14 @@ class LevelManagerClass:
         except Exception as e:
             logger.error("Could not load levels : %s", e)
         return res
-    async def changeLevelListener(self, params:dict):
+
+    async def changeLevelListener(self, params: dict):
         event = params['event']
-        if(isinstance(event, ChangeLevelEvent)):
+        if (isinstance(event, ChangeLevelEvent)):
             await self._changeLevel(event.nextLevel, event.nextField)
-    async def gameOverListener(self, params:dict):
+
+    async def gameOverListener(self, params: dict):
         self.delLevel()
-            
-        
-        
-        
+
+
 LevelManager = LevelManagerClass()
-    
-    
