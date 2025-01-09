@@ -96,7 +96,7 @@ This project is open-source. Please refer to the `LICENSE` file in the repositor
 ---
 
 ## Creating levels
-You may define custom levels in .json files. Refer to (this guide)[LEVEL.md]
+You may define custom levels in .json files. Refer to (this guide)[/LEVEL.md]
 
 ## Modding
 Simple modding is supported via adding files to the 'mod' folder. Currently it is impossible to overrite the behaviour of the game, but you may add your own:
