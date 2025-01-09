@@ -1,6 +1,3 @@
-Here's the `README.md` file for your project:
-
----
 
 # Pipr Qwest
 
