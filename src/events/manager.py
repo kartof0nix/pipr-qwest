@@ -5,18 +5,20 @@ import traceback
 import logging
 logger = logging.getLogger(__name__)
 
-async def runEvent(eventId : str) -> str:
+
+async def runEvent(eventId: str) -> str:
     logger.info(eventId)
     event = registeredEvents[eventId]
-    if(type(event).__name__+"TUI" in eventTUIs):
-        with eventTUIs[type(event).__name__+"TUI"](event) as tui:
+    if (type(event).__name__ + "TUI" in eventTUIs):
+        with eventTUIs[type(event).__name__ + "TUI"](event):
             res = await event()
     else:
         res = await event()
     return res
 
-async def launchEvents(eventId : str):
-    while(eventId != "" and eventId != None):
+
+async def launchEvents(eventId: str):
+    while (eventId != "" and eventId is not None):
         try:
             logger.info("launching %s", eventId)
             eventId = await runEvent(eventId)

@@ -1,0 +1,67 @@
+{
+    "name": "castle_gate.json",
+    "events": [
+        {
+            "eventType": "ConversationEvent",
+            "eventId": "gateKeeper",
+            "params": {
+                "dialogue": [
+                    [
+                        "gatekeeper",
+                        "Halt! None shall enter the castle without a royal pass."
+                    ],
+                    [
+                        "Max",
+                        "I must find a way to get in..."
+                    ],
+                    [
+                        "gatekeeper",
+                        "I'll let you in on a secret. There's nothing more to this game LOL. So congrats you won :p"
+                    ]
+                ],
+                "nextEvent": "findPass"
+            }
+        },
+        {
+            "eventType": "ItemGiveEvent",
+            "eventId": "findRoyalPass",
+            "params": {
+                "item_id": "royal_pass",
+                "decorations": ["item"]
+
+            }
+        },
+        {
+            "eventType": "ChangeLevelEvent",
+            "eventId": "enterCastle",
+            "params": {
+                "nextLevel": "castle_hall.json",
+                "nextField": 1
+            }
+        }
+    ],
+    "grid": [
+        [1, 2],
+        [3, 4]
+    ],
+    "graph": [
+        [1, 2], [2, 3], [3, 4]
+    ],
+    "startField": 1,
+    "fields": {
+        "1": {
+            "eventOnEnter": "gateKeeper"
+        },
+        "2": {
+            "eventOnInspect": "findRoyalPass",
+            "decorations": ["door"]
+        },
+        "3": {
+            "decorations": ["fountain"]
+        },
+        "4": {
+            "eventOnInspect": "enterCastle",
+            "decorations": ["door"]
+        }
+    }
+}

@@ -1,17 +1,32 @@
 {
     "attrmap":{
-        "w":"hwhite"
+        "w":"default",
+        "g":"hgreen",
+        "b":"brown"
     },
     "textutes" : {
         "1x2": [["🧌 "], ["ww"]],
-        "3x3": [[  
-            "🧌  ", 
-            " 🧌 ",
-            "🧌  "
+        "4x5": [[ 
+            " ●_● ", 
+            "/│ │\\",
+            " │ │ ",
+            " │   " 
         ],[
-            "www",
-            "www",
-            "www"
+            "ggggg",
+            "ggggg",
+            "gggbg",
+            "gbggg"
+        ]],
+        "4x10": [[ 
+            " ●_●  ●_● ", 
+            "/│ │\\/│ │\\",
+            " │ │  │ │ ",
+            " │    │   " 
+        ],[
+            "gggggggggg",
+            "gggggggggg",
+            "gggbggggbg",
+            "gbggggbggg"
         ]]
     }
 }

@@ -1,0 +1,106 @@
+{
+    "name": "mystic_forest.json",
+    "events": [
+        {
+            "eventType": "ConversationEvent",
+            "eventId": "elfMeeting",
+            "params": {
+                "dialogue": [
+                    [
+                        "elf guardian",
+                        "Welcome to the Mystic Forest, traveler. What brings you here?"
+                    ],
+                    [
+                        "Max",
+                        "I seek the sacred amulet."
+                    ],
+                    [
+                        "elf guardian",
+                        "You must prove your worth by solving the riddle of the ancients."
+                    ],
+                    [
+                        "elf guardian",
+                        "I’m a traveler, silent and slow,\nMy face I hide, yet still I show.\nA sculptor’s light reveals my guise,\nThough I am still, I seem to rise.\nNo fire burns within my heart,\nYet through the dark, I play my part."
+                    ]
+                ],
+                "nextEvent": "solveRiddle"
+            }
+        },
+        {
+            "eventType": "MenuEvent",
+            "eventId": "solveRiddle",
+            "params": {
+                "entryList": [
+                    "The sun",
+                    "The moon",
+                    "The stars",
+                    "Just give up..."
+                ],
+                "eventList": [
+                    "wrongAnswer",
+                    "correctAnswer",
+                    "wrongAnswer",
+                    ""
+                ]
+            }
+        },
+        {
+            "eventType": "ConversationEvent",
+            "eventId": "wrongAnswer",
+            "params": {
+                "dialogue": [
+                    [
+                        "elf guardian",
+                        "That is incorrect. You must try again."
+                    ]
+                ],
+                "nextEvent": "solveRiddle"
+            }
+        },
+        {
+            "eventType": "ItemGiveEvent",
+            "eventId": "correctAnswer",
+            "params": {
+                "item_id": "magic_staff"
+            }
+        },
+        {
+            "eventType": "ChangeLevelEvent",
+            "eventId": "exitForest",
+            "params": {
+                "nextLevel": "dark_cave.json",
+                "nextField": 1
+            }
+            
+        }
+    ],
+    "grid": [
+        [1, 2, 3],
+        [4, 5, 6]
+    ],
+    "graph": [
+        [1, 2], [2, 3], [2, 5], [5, 4], [5, 6]
+    ],
+    "startField": 1,
+    "fields": {
+        "1": {
+            "decorations": ["tree"]
+        },
+        "2": {
+            "eventOnEnter": "elfMeeting"
+        },
+        "3": {},
+        "4": {
+            "eventOnInspect": "exitForest",
+            "decorations": ["door"]
+        },
+        "5": {
+            "_decorations": ["rune_stone"]
+        },
+        "6": {
+            "eventOnInspect": "exitForest",
+            "decorations": ["door"]
+
+        }
+    }
+}

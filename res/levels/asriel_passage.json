@@ -22,7 +22,7 @@
     ],
     "events": [
         {
-            "eventType": "changeLevelEvent",
+            "eventType": "ChangeLevelEvent",
             "eventId": "level_asriel_den",
             "params": {
                 "nextLevel": "asriel_den.json",
@@ -30,10 +30,10 @@
             }
         },
         {
-            "eventType": "changeLevelEvent",
+            "eventType": "ChangeLevelEvent",
             "eventId": "level_asriel_big",
             "params": {
-                "nextLevel": "asriel_big.json",
+                "nextLevel": "mythic_forest.json",
                 "nextField": 1
             }
         }
