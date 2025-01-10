@@ -109,7 +109,7 @@ class Setting(Config):
                 constrains[key]["type"] = type(defaultValues[key])
         self.name = name
         self.constrains = constrains
-        super().__init__(name, defaultValues)
+        super().__init__(name, defaultValues, critical=False)
 
     def check_value(self, name: str, value: Any):
         if name not in self.config:

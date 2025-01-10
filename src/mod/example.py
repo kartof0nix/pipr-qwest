@@ -8,6 +8,7 @@ from src.globals import player
 '''This is an exaple mod ilustrating the idea of modding.
 Note that ItemGiveEvent is defined in the base-game levels, so removing this file will cause the game to fail'''
 
+
 class ItemGiveEvent(GameEvent):
     localConfig = {
         'item_id': '',

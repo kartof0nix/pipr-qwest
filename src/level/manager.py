@@ -33,7 +33,7 @@ class LevelManagerClass:
             logger.info("Closing level %s", self.lvl.name)
             self.exitEvent.clear()
         except Exception as e:
-            event_queue.pushEvent("error", {"message": "Error: " + str(e)})
+            event_queue.pushEvent("error", {"message": "Error loading level: " + str(e)})
             logger.error("Running level failed: %s", e)
             logger.error("Traceback : %s", traceback.format_exc())
 

@@ -1,6 +1,8 @@
 '''
 Call the package directly to run it.
 '''
+import importlib
+import pkgutil
 from src.graphics.common import buttonAttr, buttonAttr2, niceFiller, notify
 from src.graphics.settings import launchSettings
 from src.common import event_queue
@@ -12,7 +14,7 @@ import urwid
 from pathlib import Path
 import logging
 from typing import List
-from src.mod import *
+import src.mod
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(filename='qwest.log',
@@ -139,6 +141,19 @@ class Main:
 # a = input("Select level")
 main = Main()
 mainView = MainView()
+
+
+def import_all_mods(mod_package: str):
+    imported_modules = []
+    package = importlib.import_module(mod_package)
+    for _, module_name, is_pkg in pkgutil.walk_packages(package.__path__, package.__name__ + "."):
+        if not is_pkg:  # Only import modules, not sub-packages
+            imported_modules.append(importlib.import_module(module_name))
+    return imported_modules
+
+
+# Example Usage
+modules = import_all_mods("src.mod")
 
 
 async def errorHandler(params: dict):

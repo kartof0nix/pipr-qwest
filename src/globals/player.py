@@ -78,8 +78,8 @@ def listSaves() -> List[str]:
             if item.is_file():
                 res.append(item.name.removesuffix(".json"))
     except Exception as e:
-        pushEvent("error", {"message": "Error: " + str(e)})
-        logger.error("Listing saves failed : %s", e)
+        # pushEvent("error", {"message": "Error: " + str(e)})
+        logger.warning("Listing saves failed : %s", e)
     return res
 
 

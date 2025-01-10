@@ -299,7 +299,7 @@ def eventFromDict(type: str, eventId: str, config: dict = {}):
         return eventTypes[type](eventId, config)
     except KeyError as e:
         logger.error("Event type '%s' undefined (%s)", type, e)
-        pushEvent("error", {"message": "Event type '%s' undefined"})
+        pushEvent("error", {"message": "Event type '%s' undefined" % type})
         # Return dummy event as quick-fix
         return GameEvent(eventId, config)
 # e = changeLevelEvent()
