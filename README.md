@@ -23,17 +23,18 @@ Follow these steps to install and run the game:
    python3 -m venv pipr-qwest-env
    ```
 
-3. **Install Dependencies**  
-   Activate the virtual environment and install all required libraries using:
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Activate the Virtual Environment**  
+3. **Activate the Virtual Environment**  
    - On Linux/Mac:
      ```bash
      source pipr-qwest-env/bin/activate
      ```
+     
+4. **Install Dependencies**  
+   Install all required libraries using:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
 5. **Run the Game**  
    Launch the game by running the `src` module:
    ```bash
