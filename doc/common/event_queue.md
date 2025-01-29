@@ -8,3 +8,10 @@ The `event_queue.py` file provides a centralized event queue system for managing
 
 This system facilitates decoupled communication between game modules, ensuring that events can trigger actions across different parts of the game.
 
+
+---
+
+### **Test Description**
+1. **Setup**: Creates an asynchronous test using `pytest-asyncio`. Registers a simple handler for an event type (`test_event`).
+2. **Event Handling**: Tests if the handler processes events pushed into the queue.
+3. **Unregistering**: Verifies that after the handler is unregistered, subsequent events of the same type are not processed.
