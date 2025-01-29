@@ -18,7 +18,3 @@ This system facilitates decoupled communication between game modules, ensuring t
 1. **Setup**: Creates an asynchronous test using `pytest-asyncio`. Registers a simple handler for an event type (`test_event`).
 2. **Event Handling**: Tests if the handler processes events pushed into the queue.
 3. **Unregistering**: Verifies that after the handler is unregistered, subsequent events of the same type are not processed.
-
----
-
-This test ensures the core functionality of the event queue system, validating event pushing, handler execution, and proper unregistration. Let me know if you'd like refinements!

@@ -1,6 +1,4 @@
-The `manager.py` file is responsible for managing the execution of game events. It acts as a centralized controller to handle event logic, including integrating TUIs (Text User Interfaces) when applicable. Here's a breakdown of its functionality:
 
----
 
 ### **Responsibilities**
 1. **Event Execution**

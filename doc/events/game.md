@@ -71,7 +71,3 @@ The `events/game.py` file defines the framework for managing and executing vario
      next_event = await menu()
      ```
 
----
-
-### **Intended Use**
-The `events/game.py` file provides a flexible and reusable system for handling a variety of game events. It decouples event creation and execution, enabling modular and extensible gameplay mechanics.

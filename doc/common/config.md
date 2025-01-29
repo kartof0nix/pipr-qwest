@@ -1,6 +1,3 @@
-Here’s a concise documentation for using the `config.py` file:
-
----
 
 ## **Configuration Management with `config.py`**
 
